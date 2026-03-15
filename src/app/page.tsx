@@ -67,12 +67,12 @@ const CSS_ANIMATIONS = `
     to   { opacity: 1; transform: translateY(0); }
   }
   @keyframes scaleIn {
-    from { opacity: 0; transform: scale(0.4) rotate(-6deg); }
-    to   { opacity: 1; transform: scale(1) rotate(0deg); }
+    from { opacity: 0; transform: scale(0.5); }
+    to   { opacity: 1; transform: scale(1); }
   }
   @keyframes sadDrop {
-    from { opacity: 0; transform: translateY(-40px) scale(1); }
-    to   { opacity: 1; transform: translateY(0) scale(1); }
+    from { opacity: 0; transform: translateY(-30px); }
+    to   { opacity: 1; transform: translateY(0); }
   }
   @keyframes shimmerGold {
     0%,100% { text-shadow: 0 0 20px rgba(255,180,0,0.5); }
@@ -324,7 +324,7 @@ export default function OmikujiApp() {
         setShaking(false)
         setTilting(true)
         setPhase('stick')
-      }, 3500)
+      }, 4000)
       return () => clearTimeout(t1)
     }
   }, [phase])
