@@ -92,8 +92,9 @@ export default function OmikujiApp() {
   const [particles, setParticles] = useState<number[]>([])
   const shakeVideoRef = useRef<HTMLVideoElement>(null)
   const stickVideoRef = useRef<HTMLVideoElement>(null)
-  const bgmRef = useRef<HTMLAudioElement>(null)
-  const seRef = useRef<HTMLAudioElement>(null)
+  const voiceShakingRef = useRef<HTMLAudioElement>(null)
+  const voiceStickRef = useRef<HTMLAudioElement>(null)
+  const voiceResultRef = useRef<HTMLAudioElement>(null)
 
   const handleStart = () => {
     const num = Math.floor(Math.random() * 100) + 1
@@ -102,10 +103,10 @@ export default function OmikujiApp() {
     setFortune(FORTUNES[fortuneIndex])
     setPhase('shaking')
 
-    // Play SE
-    if (seRef.current) {
-      seRef.current.currentTime = 0
-      seRef.current.play().catch(() => {})
+    // Play voice
+    if (voiceShakingRef.current) {
+      voiceShakingRef.current.currentTime = 0
+      voiceShakingRef.current.play().catch(() => {})
     }
   }
 
@@ -125,11 +126,18 @@ export default function OmikujiApp() {
     if (phase === 'stick' && stickVideoRef.current) {
       stickVideoRef.current.currentTime = 0
       stickVideoRef.current.play().catch(() => {})
+      if (voiceStickRef.current) {
+        voiceStickRef.current.currentTime = 0
+        voiceStickRef.current.play().catch(() => {})
+      }
 
       const timer = setTimeout(() => {
         setPhase('result')
-        // Spawn particles
         setParticles(Array.from({ length: 20 }, (_, i) => i))
+        if (voiceResultRef.current) {
+          voiceResultRef.current.currentTime = 0
+          voiceResultRef.current.play().catch(() => {})
+        }
       }, 5000)
       return () => clearTimeout(timer)
     }
@@ -160,9 +168,10 @@ export default function OmikujiApp() {
         pointerEvents: 'none',
       }} />
 
-      {/* BGM */}
-      <audio ref={bgmRef} src="/audio/bgm.mp3" loop />
-      <audio ref={seRef} src="/audio/shake_se.mp3" />
+      {/* Audio */}
+      <audio ref={voiceShakingRef} src="/audio/voice_shaking.mp3" />
+      <audio ref={voiceStickRef} src="/audio/voice_stick.mp3" />
+      <audio ref={voiceResultRef} src="/audio/voice_result.mp3" />
 
       {/* START SCREEN */}
       {phase === 'start' && (
