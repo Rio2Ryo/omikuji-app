@@ -15,14 +15,14 @@ const K = {
 
 // ラッキーアイテム：実際の「モノ・場所・生き物」
 const LUCKY_ITEMS = [
-  '桜の花びら', '黒猫', '四つ葉のクローバー', '三日月',
-  '蝶', '波の音', 'レモン', 'ハリネズミ',
-  '古い本', '☕ コーヒー', 'ミント', 'フクロウ',
-  '虹', 'きのこ', '⭐ 流れ星', '亀',
-  '竹', 'ハイビスカス', 'キツネ', '青い石',
-  'ひまわり', 'イルカ', 'お茶', '満月',
-  '鷹', 'サボテン', 'ぶどう', 'みつばち',
-  '金色の光', '風鈴', '紅葉', 'クジラ',
+  '桜の花びら', '黒猫', '四つ葉のクローバー',
+  '古い本', 'コーヒー', 'ミントの葉', 'フクロウの置物',
+  'ひまわり', '緑茶', '松ぼっくり',
+  '白い石', '赤いリボン', '青いペン', 'ポストカード',
+  '小さなサボテン', 'お守り', '貝殻', '木の実',
+  '風鈴', '和紙', '丸い小石', 'ドライフラワー',
+  '手ぬぐい', '折り紙', 'ろうそく', '小さな鈴',
+  '苔玉', '竹の箸', '陶器のカップ', '線香',
 ]
 
 const FORTUNES = [
@@ -91,18 +91,13 @@ type Phase = 'shaking' | 'stick' | 'result'
 // ── CSS アニメーション ──────────────────────────────
 const CSS_ANIM = `
   @keyframes shakeBox {
-    0%   { transform: translateX(-50%) rotate(0deg) translateY(0px); }
-    8%   { transform: translateX(-56%) rotate(-12deg) translateY(-3px); }
-    16%  { transform: translateX(-44%) rotate(12deg) translateY(-5px); }
-    24%  { transform: translateX(-57%) rotate(-14deg) translateY(-3px); }
-    32%  { transform: translateX(-43%) rotate(14deg) translateY(-6px); }
-    40%  { transform: translateX(-56%) rotate(-11deg) translateY(-4px); }
-    48%  { transform: translateX(-44%) rotate(11deg) translateY(-5px); }
-    56%  { transform: translateX(-55%) rotate(-9deg) translateY(-3px); }
-    64%  { transform: translateX(-45%) rotate(9deg) translateY(-4px); }
-    72%  { transform: translateX(-53%) rotate(-7deg) translateY(-2px); }
-    80%  { transform: translateX(-47%) rotate(7deg) translateY(-3px); }
-    88%  { transform: translateX(-52%) rotate(-4deg) translateY(-1px); }
+    0%   { transform: translateX(-50%) rotate(-4deg) translateY(2px); }
+    14%  { transform: translateX(-50%) rotate(6deg) translateY(-5px); }
+    28%  { transform: translateX(-50%) rotate(-7deg) translateY(3px); }
+    42%  { transform: translateX(-50%) rotate(7deg) translateY(-4px); }
+    56%  { transform: translateX(-50%) rotate(-5deg) translateY(3px); }
+    70%  { transform: translateX(-50%) rotate(5deg) translateY(-3px); }
+    84%  { transform: translateX(-50%) rotate(-3deg) translateY(1px); }
     100% { transform: translateX(-50%) rotate(0deg) translateY(0px); }
   }
   @keyframes tiltBox {
@@ -401,10 +396,37 @@ export default function OmikujiApp() {
   const [luckyItem, setLuckyItem] = useState<string>(getLucky)
   const [showEffects, setShowEffects] = useState(false)
   const [shaking, setShaking] = useState(true)
+  const [redirectUrl, setRedirectUrl] = useState('https://kataomoi.org')
+  const [showAdmin, setShowAdmin] = useState(false)
+  const [adminInput, setAdminInput] = useState('')
+  const [adminPass, setAdminPass] = useState('')
+  const [adminMsg, setAdminMsg] = useState('')
+  const [countdown, setCountdown] = useState<number | null>(null)
   const [tilting, setTilting] = useState(false)
 
   const isDaikichi = fortune.id === 'daikichi'
   const isKyo = fortune.id === 'kyo'
+
+  // リダイレクトURL取得
+  useEffect(() => {
+    fetch('/api/redirect').then(r => r.json()).then(d => setRedirectUrl(d.url)).catch(() => {})
+  }, [])
+
+  // 結果表示後3秒でリダイレクト
+  useEffect(() => {
+    if (phase !== 'result') return
+    let c = 3
+    setCountdown(c)
+    const iv = setInterval(() => {
+      c--
+      setCountdown(c)
+      if (c <= 0) {
+        clearInterval(iv)
+        window.location.href = redirectUrl
+      }
+    }, 1000)
+    return () => clearInterval(iv)
+  }, [phase, redirectUrl])
 
   useEffect(() => {
     if (phase === 'shaking') {
@@ -414,7 +436,7 @@ export default function OmikujiApp() {
         setShaking(false)
         setTilting(true)
         setPhase('stick')
-      }, 4000)
+      }, 2000)
       return () => clearTimeout(t)
     }
   }, [phase])
@@ -628,6 +650,50 @@ export default function OmikujiApp() {
               >
                 もう一度引く
               </button>
+
+              {/* カウントダウン */}
+              {countdown !== null && countdown > 0 && (
+                <p style={{ textAlign: 'center', fontSize: '12px', color: isKyo ? 'rgba(180,195,215,0.5)' : `${fortune.accent}70`, marginTop: '10px', letterSpacing: '0.1em' }}>
+                  {countdown}秒後に移動します...
+                </p>
+              )}
+
+              {/* 管理ボタン */}
+              <button
+                onClick={() => setShowAdmin(!showAdmin)}
+                style={{ display: 'block', width: '100%', marginTop: '8px', padding: '8px', fontSize: '11px', background: 'transparent', color: 'rgba(100,130,180,0.4)', border: '1px solid transparent', borderRadius: '6px', cursor: 'pointer', letterSpacing: '0.1em' }}
+              >⚙ 管理</button>
+
+              {showAdmin && (
+                <div style={{ marginTop: '8px', background: isKyo ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)', borderRadius: '10px', padding: '14px' }}>
+                  <p style={{ fontSize: '11px', marginBottom: '8px', color: isKyo ? 'rgba(170,185,205,0.7)' : '#666', letterSpacing: '0.05em' }}>リダイレクト先URL</p>
+                  <input
+                    value={adminInput}
+                    onChange={e => setAdminInput(e.target.value)}
+                    placeholder="https://example.com"
+                    style={{ width: '100%', padding: '8px 10px', borderRadius: '6px', border: '1px solid #ccd', fontSize: '13px', marginBottom: '6px', boxSizing: 'border-box' }}
+                  />
+                  <input
+                    type="password"
+                    value={adminPass}
+                    onChange={e => setAdminPass(e.target.value)}
+                    placeholder="パスワード"
+                    style={{ width: '100%', padding: '8px 10px', borderRadius: '6px', border: '1px solid #ccd', fontSize: '13px', marginBottom: '8px', boxSizing: 'border-box' }}
+                  />
+                  <button
+                    onClick={async () => {
+                      const r = await fetch('/api/redirect', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url: adminInput, password: adminPass }) })
+                      const d = await r.json()
+                      if (d.ok) { setRedirectUrl(d.url); setAdminMsg('✓ 更新しました'); setAdminInput(''); setAdminPass('') }
+                      else setAdminMsg('× ' + (d.error || '失敗'))
+                      setTimeout(() => setAdminMsg(''), 3000)
+                    }}
+                    style={{ width: '100%', padding: '9px', background: '#1e5a9f', color: '#fff', border: 'none', borderRadius: '6px', fontSize: '13px', cursor: 'pointer', fontWeight: '600' }}
+                  >保存</button>
+                  {adminMsg && <p style={{ marginTop: '6px', fontSize: '12px', textAlign: 'center', color: adminMsg.startsWith('✓') ? '#2a8' : '#e44' }}>{adminMsg}</p>}
+                  <p style={{ marginTop: '8px', fontSize: '10px', color: '#999', textAlign: 'center' }}>現在: {redirectUrl}</p>
+                </div>
+              )}
             </div>
           )}
         </main>
