@@ -25,7 +25,7 @@ const DEFAULT_CONFIG: RedirectConfig = {
 
 // インメモリキャッシュ（頻繁なGist APIコール回避）
 let cache: { config: RedirectConfig; fetchedAt: number } | null = null
-const CACHE_TTL = 30_000 // 30秒
+const CACHE_TTL = 0 // キャッシュなし（常に最新をGistから取得）
 
 async function fetchConfig(): Promise<RedirectConfig> {
   // キャッシュ有効なら使う

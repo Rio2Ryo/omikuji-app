@@ -436,7 +436,7 @@ function Logo() {
 }
 
 // ── カード1枚専用 管理パネル ─────────────────────────
-function CardAdminPanel({ uuid, onClose }: { uuid: string; onClose: () => void }) {
+function CardAdminPanel({ uuid, onClose, onSaved }: { uuid: string; onClose: () => void; onSaved?: (url: string) => void }) {
   const cardUrl = typeof window !== 'undefined'
     ? `${window.location.origin}/?uuid=${uuid}`
     : `https://omikuji-app-ten.vercel.app/?uuid=${uuid}`
@@ -477,7 +477,7 @@ function CardAdminPanel({ uuid, onClose }: { uuid: string; onClose: () => void }
       })
       const d = await r.json()
       if (d.error) { setMsg('× ' + d.error) }
-      else { setRedirectUrl(inputUrl); setSaved(true); setMsg('✓ 保存しました'); setTimeout(() => { setSaved(false); setMsg('') }, 2500) }
+      else { setRedirectUrl(inputUrl); setSaved(true); setMsg('✓ 保存しました'); onSaved?.(inputUrl); setTimeout(() => { setSaved(false); setMsg('') }, 2500) }
     } catch { setMsg('× 通信エラー') }
     setLoading(false)
   }
@@ -909,7 +909,7 @@ export default function OmikujiApp() {
       </div>
 
       {/* カード管理画面（uuid付きアクセス時のみ表示） */}
-      {showAdmin && <CardAdminPanel uuid={cardUuid || ""} onClose={() => setShowAdmin(false)} />}
+      {showAdmin && <CardAdminPanel uuid={cardUuid || ""} onClose={() => setShowAdmin(false)} onSaved={(url) => { setRedirectUrl(url); setShowAdmin(false) }} />}
     </>
   )
 }
