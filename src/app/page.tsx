@@ -364,21 +364,6 @@ export default function OmikujiApp() {
               {fortune.message}
             </p>
 
-            {/* 運勢詳細グリッド */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '14px' }}>
-              {Object.entries(fortune.detail).map(([key, value]) => (
-                <div key={key} style={{
-                  background: 'rgba(0,0,0,0.25)',
-                  borderRadius: '6px',
-                  padding: '8px 10px',
-                  borderLeft: `3px solid ${fortune.color}`,
-                }}>
-                  <div style={{ fontSize: '10px', color: 'rgba(160,180,200,0.6)', marginBottom: '3px', letterSpacing: '0.1em' }}>{key}</div>
-                  <div style={{ fontSize: '12px', color: isKyo ? 'rgba(180,190,200,0.8)' : '#f0f8ff', fontWeight: 'bold' }}>{value}</div>
-                </div>
-              ))}
-            </div>
-
             {/* ラッキーアイテム（凶のときは非表示） */}
             {!isKyo && (
               <div style={{ borderTop: `1px solid ${fortune.color}25`, paddingTop: '12px' }}>
