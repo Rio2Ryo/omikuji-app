@@ -6,34 +6,88 @@
 
 html, body {
   height: 100%;
-  background: #1a0a00;
   font-family: 'Hiragino Mincho ProN', 'Yu Mincho', serif;
-  color: #f5e6c8;
+  color: #e8f4ff;
   overflow: hidden;
 }
 
+/* 大吉用 */
+.bg-daikichi {
+  background: radial-gradient(ellipse at 50% 30%, #fff8e0 0%, #ffd700 20%, #ff8c00 50%, #8b0000 100%);
+  animation: bgPulse 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes bgPulse {
+  from { filter: brightness(1); }
+  to { filter: brightness(1.15); }
+}
+
+/* 凶用 */
+.bg-kyo {
+  background: radial-gradient(ellipse at 50% 60%, #1a1a2e 0%, #0d0d1a 50%, #000000 100%);
+}
+
+/* 通常 */
+.bg-normal {
+  background: radial-gradient(ellipse at 50% 30%, #0a1628 0%, #0d1f3c 40%, #071020 100%);
+}
+
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(20px); }
+  from { opacity: 0; transform: translateY(16px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes scaleIn {
-  from { opacity: 0; transform: scale(0.5); }
-  to { opacity: 1; transform: scale(1); }
+  from { opacity: 0; transform: scale(0.3) rotate(-10deg); }
+  to { opacity: 1; transform: scale(1) rotate(0deg); }
 }
 
-@keyframes shimmer {
-  0% { box-shadow: 0 0 20px rgba(255, 200, 50, 0.3); }
-  50% { box-shadow: 0 0 60px rgba(255, 200, 50, 0.8), 0 0 100px rgba(255, 150, 0, 0.4); }
-  100% { box-shadow: 0 0 20px rgba(255, 200, 50, 0.3); }
+@keyframes shimmerGold {
+  0% { text-shadow: 0 0 20px rgba(255,215,0,0.5), 0 0 40px rgba(255,150,0,0.3); }
+  50% { text-shadow: 0 0 60px rgba(255,215,0,1), 0 0 120px rgba(255,150,0,0.8), 0 0 180px rgba(255,80,0,0.4); }
+  100% { text-shadow: 0 0 20px rgba(255,215,0,0.5), 0 0 40px rgba(255,150,0,0.3); }
+}
+
+@keyframes shimmerGray {
+  0% { text-shadow: 0 0 10px rgba(150,150,150,0.3); }
+  50% { text-shadow: 0 0 30px rgba(150,150,150,0.6); }
+  100% { text-shadow: 0 0 10px rgba(150,150,150,0.3); }
+}
+
+@keyframes shimmerBlue {
+  0% { text-shadow: 0 0 20px rgba(100,160,255,0.4); }
+  50% { text-shadow: 0 0 50px rgba(100,160,255,0.9); }
+  100% { text-shadow: 0 0 20px rgba(100,160,255,0.4); }
 }
 
 @keyframes float {
   0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
+  50% { transform: translateY(-8px); }
 }
 
 @keyframes particleFly {
-  0% { transform: translateY(0) translateX(0) rotate(0deg); opacity: 1; }
-  100% { transform: translateY(-200px) translateX(var(--tx)) rotate(720deg); opacity: 0; }
+  0% { transform: translateY(0) translateX(0) scale(1) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(-280px) translateX(var(--tx)) scale(0) rotate(720deg); opacity: 0; }
+}
+
+@keyframes sadDrop {
+  0% { transform: translateY(-30px); opacity: 0; }
+  60% { transform: translateY(5px); opacity: 1; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes rainDrop {
+  0% { transform: translateY(-20px); opacity: 0.7; }
+  100% { transform: translateY(100vh); opacity: 0; }
+}
+
+@keyframes starBurst {
+  0% { transform: scale(0) rotate(0deg); opacity: 1; }
+  80% { opacity: 1; }
+  100% { transform: scale(1) rotate(var(--rot)); opacity: 0; }
+}
+
+@keyframes logoGlow {
+  0%, 100% { filter: drop-shadow(0 0 8px rgba(100,160,255,0.5)); }
+  50% { filter: drop-shadow(0 0 24px rgba(100,160,255,0.9)) drop-shadow(0 0 48px rgba(60,120,255,0.5)); }
 }
