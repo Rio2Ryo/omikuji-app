@@ -94,6 +94,29 @@ function getLucky(): string {
 
 type Phase = 'shaking' | 'stick' | 'result'
 
+// ── 履歴 ────────────────────────────────────────────
+interface FortuneRecord {
+  id: string        // fortune.id
+  result: string    // 大吉 etc
+  resultColor: string
+  stickNumber: number
+  luckyItem: string
+  date: string      // YYYY/MM/DD HH:mm
+}
+const HISTORY_KEY = 'omikuji_history'
+const HISTORY_MAX = 10
+
+function loadHistory(): FortuneRecord[] {
+  if (typeof window === 'undefined') return []
+  try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]') } catch { return [] }
+}
+function saveHistory(record: FortuneRecord) {
+  const prev = loadHistory()
+  const next = [record, ...prev].slice(0, HISTORY_MAX)
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(next))
+  return next
+}
+
 // ── CSS アニメーション ──────────────────────────────
 const CSS_ANIM = `
   /* ===== シャカシャカ：筒が弧を描いて揺れる ===== */
@@ -583,9 +606,15 @@ export default function OmikujiApp() {
   const [countdown, setCountdown] = useState<number | null>(null)
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const [tilting, setTilting] = useState(false)
+  const [history, setHistory] = useState<FortuneRecord[]>([])
 
   const isDaikichi = fortune.id === 'daikichi'
   const isKyo = fortune.id === 'kyo'
+
+  // 履歴ロード
+  useEffect(() => {
+    setHistory(loadHistory())
+  }, [])
 
   // URLパラメータからuuidを取得してリダイレクトURL取得
   useEffect(() => {
@@ -600,6 +629,24 @@ export default function OmikujiApp() {
     }
     // uuidなし = デフォルトURL（kataomoi.org）のまま
   }, [])
+
+  // 結果確定時に履歴保存
+  useEffect(() => {
+    if (phase !== 'result') return
+    const now = new Date()
+    const pad = (n: number) => String(n).padStart(2, '0')
+    const record: FortuneRecord = {
+      id: fortune.id,
+      result: fortune.result,
+      resultColor: fortune.resultColor,
+      stickNumber,
+      luckyItem,
+      date: `${now.getMonth() + 1}/${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`,
+    }
+    const next = saveHistory(record)
+    setHistory(next)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase])
 
   // 結果表示後3秒でリダイレクト（管理画面が開いている間は停止）
   useEffect(() => {
@@ -845,6 +892,34 @@ export default function OmikujiApp() {
                   </div>
                 </div>
               </div>
+
+              {/* 履歴（今回を除く直近分） */}
+              {history.length > 1 && (
+                <div style={{
+                  marginBottom: '14px',
+                  padding: '12px 14px',
+                  background: isKyo ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
+                  borderRadius: '12px',
+                }}>
+                  <p style={{
+                    fontSize: '10px', fontWeight: '700', letterSpacing: '0.15em',
+                    color: isKyo ? 'rgba(180,200,230,0.5)' : `${fortune.accent}80`,
+                    marginBottom: '8px',
+                  }}>HISTORY</p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    {history.slice(1, 6).map((rec, i) => (
+                      <div key={i} style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                        fontSize: '12px',
+                      }}>
+                        <span style={{ color: isKyo ? 'rgba(180,200,230,0.4)' : 'rgba(80,100,130,0.5)', fontSize: '10px', minWidth: '60px' }}>{rec.date}</span>
+                        <span style={{ fontWeight: '700', color: rec.resultColor, minWidth: '32px', textAlign: 'center', fontSize: '13px' }}>{rec.result}</span>
+                        <span style={{ color: isKyo ? 'rgba(180,200,230,0.5)' : 'rgba(80,100,130,0.6)', fontSize: '11px', flex: 1, textAlign: 'right' }}>{rec.luckyItem}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* もう一度ボタン */}
               <button
