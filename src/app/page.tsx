@@ -12,23 +12,17 @@ const K = {
 }
 
 const LUCKY_ITEMS = [
-  { category: 'アクション', items: ['提案する', '連絡を入れる', '早起きする', 'メモを取る', '断捨離する', '挨拶を丁寧に', '先手を打つ', '確認する'] },
-  { category: 'タイミング', items: ['午前中', '会議前', '昼休み', '夕方', '月曜日', '週末前', '月初め', '期末前'] },
-  { category: 'キーワード', items: ['準備', '整理', '発信', '相談', '決断', '継続', '挑戦', '信頼'] },
-  { category: 'パートナー', items: ['上司', '同僚', '部下', 'クライアント', '取引先', 'メンター', 'チーム全員', '自分自身'] },
+  '提案してみる', '連絡を入れる', '早起きする', 'メモを取る',
+  '断捨離する', '挨拶を丁寧に', '先手を打つ', '確認する',
+  '午前中に動く', '会議前に準備', '昼休みに整理', '夕方に振り返る',
+  '準備を整える', '整理整頓する', '発信してみる', '相談してみる',
+  '決断する', '継続する', '挑戦する', '信頼を築く',
+  '上司に相談', '同僚と協力', '部下を褒める', 'クライアントに連絡',
+  '取引先に挨拶', 'メンターに話す', 'チームと共有', '自分を信じる',
 ]
 
-const FORTUNES = [
-  { id: 'daikichi', result: '大吉', reading: 'だいきち', message: '絶好調の運気。今日は思い切った提案や決断が吉。あなたのアイデアが周囲を動かす日です。自信を持って前に出ましょう。', resultColor: '#b8600a', bg: 'linear-gradient(145deg, #fff8ed 0%, #ffefc0 50%, #ffd878 100%)', cardBg: 'rgba(255,255,255,0.93)', cardBorder: '#f0c040', accent: '#d4820a', shimmer: 'shimmerGold', anim: 'scaleIn 0.45s cubic-bezier(0.34,1.8,0.64,1) forwards' },
-  { id: 'kichi', result: '吉', reading: 'きち', message: '良い流れが来ています。懸案事項に取り組むなら今日が好機。丁寧なコミュニケーションが信頼を生みます。', resultColor: K.blue, bg: `linear-gradient(145deg, ${K.bg} 0%, #e8f0fb 100%)`, cardBg: 'rgba(255,255,255,0.93)', cardBorder: K.light, accent: K.blue, shimmer: 'shimmerBlue', anim: 'scaleIn 0.45s cubic-bezier(0.34,1.56,0.64,1) forwards' },
-  { id: 'chukichi', result: '中吉', reading: 'ちゅうきち', message: '着実な一歩が実を結ぶ日。大きな動きより、目の前の仕事を丁寧に仕上げることが評価につながります。', resultColor: '#2a7a40', bg: 'linear-gradient(145deg, #f0f8f2 0%, #d8f0e0 100%)', cardBg: 'rgba(255,255,255,0.93)', cardBorder: '#80c890', accent: '#2a7a40', shimmer: 'shimmerBlue', anim: 'scaleIn 0.45s cubic-bezier(0.34,1.56,0.64,1) forwards' },
-  { id: 'shokichi', result: '小吉', reading: 'しょうきち', message: '小さな積み重ねが信頼を作ります。今日は自分から連絡を入れたり、準備を整えるのに最適な日です。', resultColor: '#1a70a0', bg: 'linear-gradient(145deg, #f0f6fa 0%, #d8ecf8 100%)', cardBg: 'rgba(255,255,255,0.93)', cardBorder: '#70b8d8', accent: '#1a70a0', shimmer: 'shimmerBlue', anim: 'scaleIn 0.45s cubic-bezier(0.34,1.56,0.64,1) forwards' },
-  { id: 'suekichi', result: '末吉', reading: 'すえきち', message: '今は仕込みの時期。焦って結果を求めず、関係を温め・スキルを磨くことに集中しましょう。必ず芽が出ます。', resultColor: '#7040a0', bg: 'linear-gradient(145deg, #f6f2fc 0%, #ead8f4 100%)', cardBg: 'rgba(255,255,255,0.93)', cardBorder: '#b890d8', accent: '#7040a0', shimmer: 'shimmerBlue', anim: 'scaleIn 0.45s cubic-bezier(0.34,1.56,0.64,1) forwards' },
-  { id: 'kyo', result: '凶', reading: 'きょう', message: '今日は慎重に。新しい提案や大きな決断は先送りが賢明です。足元を固め、準備を見直す日にしましょう。嵐の後には必ず晴れ間が待っています。', resultColor: '#707880', bg: `linear-gradient(145deg, ${K.dark} 0%, #1a2030 100%)`, cardBg: 'rgba(30,36,50,0.95)', cardBorder: '#3a4050', accent: '#8090a8', shimmer: 'shimmerGray', anim: 'sadDrop 0.6s cubic-bezier(0.22,1,0.36,1) forwards' },
-]
-
-function getLucky() {
-  return LUCKY_ITEMS.map(c => ({ category: c.category, value: c.items[Math.floor(Math.random() * c.items.length)] }))
+function getLucky(): string {
+  return LUCKY_ITEMS[Math.floor(Math.random() * LUCKY_ITEMS.length)]
 }
 
 type Phase = 'shaking' | 'stick' | 'result'
@@ -287,7 +281,7 @@ export default function OmikujiApp() {
   const [phase, setPhase] = useState<Phase>('shaking')
   const [currentFortune, setCurrentFortune] = useState(() => FORTUNES[Math.floor(Math.random() * FORTUNES.length)])
   const [stickNumber, setStickNumber] = useState(() => Math.floor(Math.random() * 50) + 1)
-  const [luckyItems, setLuckyItems] = useState(getLucky)
+  const [luckyItem, setLuckyItem] = useState<string>(getLucky)
   const [showEffects, setShowEffects] = useState(false)
   const [shaking, setShaking] = useState(true)
   const [tilting, setTilting] = useState(false)
@@ -327,7 +321,7 @@ export default function OmikujiApp() {
     setTilting(false)
     setCurrentFortune(FORTUNES[Math.floor(Math.random() * FORTUNES.length)])
     setStickNumber(Math.floor(Math.random() * 50) + 1)
-    setLuckyItems(getLucky())
+    setLuckyItem(getLucky())
     setPhase('shaking')
   }, [])
 
@@ -438,24 +432,21 @@ export default function OmikujiApp() {
                       marginBottom: '16px', textAlign: 'center',
                       fontFamily: "'Hiragino Mincho ProN', 'Yu Mincho', serif",
                     }}>{currentFortune.message}</p>
-                    <div style={{ borderTop: `1px solid ${currentFortune.cardBorder}80`, paddingTop: '14px' }}>
+                    <div style={{ borderTop: `1px solid ${currentFortune.cardBorder}80`, paddingTop: '16px', textAlign: 'center' }}>
+                      <div style={{ fontSize: '10px', fontWeight: '700', letterSpacing: '0.4em', marginBottom: '10px', color: `${currentFortune.accent}80`, fontFamily: "'Helvetica Neue', Arial, sans-serif" }}>
+                        TODAY&apos;S LUCKY
+                      </div>
                       <div style={{
-                        textAlign: 'center', fontSize: '10px', fontWeight: '700',
-                        letterSpacing: '0.4em', marginBottom: '12px',
-                        color: `${currentFortune.accent}99`,
-                        fontFamily: "'Helvetica Neue', Arial, sans-serif",
-                      }}>TODAY&apos;S LUCKY</div>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                        {luckyItems.map(item => (
-                          <div key={item.category} style={{
-                            background: isDaikichi ? 'rgba(255,200,0,0.07)' : `${currentFortune.accent}0d`,
-                            borderRadius: '8px', padding: '10px 8px', textAlign: 'center',
-                            border: `1px solid ${currentFortune.cardBorder}50`,
-                          }}>
-                            <div style={{ fontSize: '9px', color: `${currentFortune.accent}75`, marginBottom: '5px', fontWeight: '600', letterSpacing: '0.05em', fontFamily: "'Helvetica Neue', Arial, sans-serif" }}>{item.category}</div>
-                            <div style={{ fontSize: '13px', color: currentFortune.resultColor, fontWeight: '700', fontFamily: "'Hiragino Sans', sans-serif" }}>{item.value}</div>
-                          </div>
-                        ))}
+                        display: 'inline-block',
+                        background: isDaikichi ? 'rgba(255,200,0,0.1)' : `${currentFortune.accent}14`,
+                        borderRadius: '10px',
+                        padding: '14px 28px',
+                        border: `1px solid ${currentFortune.cardBorder}60`,
+                        minWidth: '160px',
+                      }}>
+                        <div style={{ fontSize: '20px', color: currentFortune.resultColor, fontWeight: '700', fontFamily: "'Hiragino Sans', sans-serif", letterSpacing: '0.05em' }}>
+                          {luckyItem}
+                        </div>
                       </div>
                     </div>
                   </>
