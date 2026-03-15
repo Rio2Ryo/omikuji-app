@@ -439,7 +439,7 @@ export default function OmikujiApp() {
                   color: 'rgba(180,195,215,0.75)',
                   lineHeight: '1.8',
                 }}>
-                  🌧 今こそ内側を磨く時。<br />この試練があなたを強くします。
+                  ── 今こそ内側を磨く時。<br />この試練があなたを強くします。
                 </div>
               )}
             </div>
