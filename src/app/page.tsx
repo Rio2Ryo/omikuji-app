@@ -871,6 +871,12 @@ export default function OmikujiApp() {
                   {countdown}秒後に移動します...
                 </p>
               )}
+
+              {/* 管理ボタン（結果画面） */}
+              <button
+                onClick={() => setShowAdmin(true)}
+                style={{ display: 'block', width: '100%', marginTop: '8px', padding: '8px', fontSize: '11px', background: 'transparent', color: 'rgba(100,130,180,0.4)', border: '1px solid transparent', borderRadius: '6px', cursor: 'pointer', letterSpacing: '0.1em' }}
+              >⚙ 管理</button>
             </div>
           )}
         </main>
