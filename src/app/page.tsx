@@ -750,13 +750,11 @@ export default function OmikujiApp() {
                 </div>
               </div>
 
-              {/* 管理ボタン（uuid付きアクセス時のみ） */}
-              {cardUuid && (
-                <button
-                  onClick={() => setShowAdmin(true)}
-                  style={{ marginTop: '14px', padding: '6px 16px', fontSize: '11px', background: 'transparent', color: 'rgba(100,130,180,0.5)', border: '1px solid rgba(100,130,180,0.2)', borderRadius: '6px', cursor: 'pointer', letterSpacing: '0.1em' }}
-                >⚙ 管理</button>
-              )}
+              {/* 管理ボタン */}
+              <button
+                onClick={() => setShowAdmin(true)}
+                style={{ marginTop: '14px', padding: '6px 16px', fontSize: '11px', background: 'transparent', color: 'rgba(100,130,180,0.5)', border: '1px solid rgba(100,130,180,0.2)', borderRadius: '6px', cursor: 'pointer', letterSpacing: '0.1em' }}
+              >⚙ 管理</button>
             </div>
           )}
 
@@ -900,12 +898,12 @@ export default function OmikujiApp() {
             <rect x="2" y="6" width="20" height="14" rx="2"/>
             <path d="M16 6V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
           </svg>
-          この名刺を購入する
+          このカードを購入する
         </a>
       </div>
 
       {/* カード管理画面（uuid付きアクセス時のみ表示） */}
-      {showAdmin && cardUuid && <CardAdminPanel uuid={cardUuid} onClose={() => setShowAdmin(false)} />}
+      {showAdmin && <CardAdminPanel uuid={cardUuid || ""} onClose={() => setShowAdmin(false)} />}
     </>
   )
 }
