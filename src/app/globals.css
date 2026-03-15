@@ -1,0 +1,39 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  background: #1a0a00;
+  font-family: 'Hiragino Mincho ProN', 'Yu Mincho', serif;
+  color: #f5e6c8;
+  overflow: hidden;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.5); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes shimmer {
+  0% { box-shadow: 0 0 20px rgba(255, 200, 50, 0.3); }
+  50% { box-shadow: 0 0 60px rgba(255, 200, 50, 0.8), 0 0 100px rgba(255, 150, 0, 0.4); }
+  100% { box-shadow: 0 0 20px rgba(255, 200, 50, 0.3); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes particleFly {
+  0% { transform: translateY(0) translateX(0) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(-200px) translateX(var(--tx)) rotate(720deg); opacity: 0; }
+}
