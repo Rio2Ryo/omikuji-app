@@ -49,18 +49,17 @@ const CSS_ANIMATIONS = `
     100% { transform: rotate(0deg) translateX(0); }
   }
   @keyframes stickSlide {
-    0%   { height: 0; opacity: 0; transform: translateY(-10px); }
-    20%  { opacity: 1; }
-    100% { height: 110px; opacity: 1; transform: translateY(0); }
+    0%   { height: 0px; opacity: 0; }
+    15%  { opacity: 1; }
+    100% { height: 160px; opacity: 1; }
   }
   @keyframes stickFadeNum {
-    0%,60% { opacity: 0; }
+    0%,70% { opacity: 0; }
     100%   { opacity: 1; }
   }
   @keyframes tiltBox {
-    0%   { transform: rotate(0deg); }
-    40%  { transform: rotate(30deg); }
-    100% { transform: rotate(35deg); }
+    0%   { transform: translateX(-50%) rotate(0deg); }
+    100% { transform: translateX(-50%) rotate(25deg); }
   }
   @keyframes fadeInUp {
     from { opacity: 0; transform: translateY(14px); }
@@ -108,144 +107,125 @@ const CSS_ANIMATIONS = `
 // おみくじ筒コンポーネント（SVGで高品質に）
 function OmikujiBox({ shaking, tilting, stickNumber }: { shaking: boolean; tilting: boolean; stickNumber: number }) {
   return (
-    <div style={{ position: 'relative', width: '160px', height: '220px', margin: '0 auto' }}>
+    // 棒が飛び出る分のスペースを確保（上180px余白）
+    <div style={{ position: 'relative', width: '200px', height: '380px', margin: '0 auto' }}>
+      {/* 棒が出てくる（筒の上に絶対配置） */}
+      {tilting && (
+        <div style={{
+          position: 'absolute',
+          top: '30px',
+          left: '50%',
+          marginLeft: '-8px',
+          transformOrigin: 'bottom center',
+          animation: 'stickSlide 1.6s cubic-bezier(0.22,1,0.36,1) 0.3s forwards',
+          height: 0,
+          overflow: 'visible',
+          zIndex: 10,
+        }}>
+          <svg width="16" height="160" viewBox="0 0 16 160" style={{ display: 'block' }}>
+            <rect x="9" y="0" width="4" height="160" rx="2" fill="rgba(0,0,0,0.12)" />
+            <rect x="3" y="0" width="10" height="160" rx="3" fill="url(#stickGrad2)" />
+            <rect x="4" y="0" width="3" height="160" rx="1.5" fill="rgba(255,255,255,0.25)" />
+            <text x="8" y="28" textAnchor="middle" fontSize="9" fontWeight="bold"
+              fill="#5a3000" fontFamily="'Hiragino Mincho ProN', serif"
+              style={{ animation: 'stickFadeNum 1.5s ease 0.8s forwards', opacity: 0 }}>
+              {stickNumber}
+            </text>
+            <defs>
+              <linearGradient id="stickGrad2" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stopColor="#d4b870" />
+                <stop offset="40%" stopColor="#f0e0a0" />
+                <stop offset="100%" stopColor="#c8a860" />
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+      )}
+
+      {/* 筒本体 */}
       <div style={{
-        position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)',
+        position: 'absolute',
+        top: '160px',
+        left: '50%',
+        transform: 'translateX(-50%)',
         animation: shaking
           ? 'shakeBox 0.45s ease-in-out infinite'
           : tilting
           ? 'tiltBox 0.9s cubic-bezier(0.22,1,0.36,1) forwards'
           : 'none',
-        transformOrigin: '50% 90%',
+        transformOrigin: '50% 100%',
       }}>
-        <svg width="100" height="200" viewBox="0 0 100 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <svg width="110" height="210" viewBox="0 0 110 210" fill="none" xmlns="http://www.w3.org/2000/svg">
           {/* 影 */}
-          <ellipse cx="50" cy="195" rx="38" ry="6" fill="rgba(0,0,0,0.12)" />
+          <ellipse cx="55" cy="204" rx="44" ry="7" fill="rgba(0,0,0,0.12)" />
 
-          {/* 筒の本体（六角形風に側面のグラデで表現） */}
-          {/* 左の暗い面 */}
-          <rect x="8" y="20" width="18" height="160" rx="2"
-            fill="url(#woodLeft)" />
-          {/* 中央の明るい面 */}
-          <rect x="26" y="14" width="48" height="166" rx="2"
-            fill="url(#woodCenter)" />
+          {/* 六角形風：左の暗い面 */}
+          <rect x="8" y="22" width="20" height="168" rx="2" fill="url(#wL)" />
+          {/* 中央明るい面 */}
+          <rect x="28" y="14" width="54" height="176" rx="2" fill="url(#wC)" />
           {/* 右の暗い面 */}
-          <rect x="74" y="20" width="18" height="160" rx="2"
-            fill="url(#woodRight)" />
+          <rect x="82" y="22" width="20" height="168" rx="2" fill="url(#wR)" />
 
           {/* 底面 */}
-          <ellipse cx="50" cy="180" rx="42" ry="8" fill="#7a5020" />
-          <ellipse cx="50" cy="178" rx="42" ry="8" fill="url(#woodBottom)" />
+          <ellipse cx="55" cy="190" rx="47" ry="9" fill="#7a5020" />
+          <ellipse cx="55" cy="188" rx="47" ry="9" fill="url(#wBot)" />
 
-          {/* 上面（蓋） */}
-          <ellipse cx="50" cy="14" rx="42" ry="10" fill="url(#woodTop)" />
+          {/* 上面 */}
+          <ellipse cx="55" cy="14" rx="47" ry="11" fill="url(#wTop)" />
           {/* 穴 */}
-          <ellipse cx="50" cy="12" rx="8" ry="5" fill="#1a0a00" />
-          <ellipse cx="50" cy="12" rx="6" ry="3.5" fill="#0a0500" />
+          <ellipse cx="55" cy="12" rx="9" ry="6" fill="#1a0a00" />
+          <ellipse cx="55" cy="12" rx="6" ry="4" fill="#050200" />
 
-          {/* 金帯 上 */}
-          <rect x="8" y="48" width="84" height="3" fill="#c89020" opacity="0.6" />
-          <rect x="26" y="48" width="48" height="3" fill="#f0c840" />
-
-          {/* 金帯メイン */}
-          <rect x="8" y="60" width="84" height="36" fill="url(#goldBand)" />
-          <rect x="8" y="60" width="84" height="1" fill="#f8e060" opacity="0.8" />
-          <rect x="8" y="95" width="84" height="1" fill="#8a6010" opacity="0.8" />
-
+          {/* 金帯上縁 */}
+          <rect x="8" y="54" width="94" height="3" fill="#f0c840" opacity="0.8" />
+          {/* 金帯 */}
+          <rect x="8" y="57" width="94" height="42" fill="url(#gBand)" />
           {/* 御神籤テキスト */}
-          <text x="50" y="88" textAnchor="middle" fontSize="13" fontWeight="bold"
-            fill="#3a1a00" fontFamily="'Hiragino Mincho ProN', serif" letterSpacing="1">
+          <text x="55" y="88" textAnchor="middle" fontSize="14" fontWeight="bold"
+            fill="#3a1a00" fontFamily="'Hiragino Mincho ProN', serif" letterSpacing="2">
             御神籤
           </text>
+          {/* 金帯下縁 */}
+          <rect x="8" y="99" width="94" height="3" fill="#c89020" opacity="0.8" />
 
-          {/* 金帯 下 */}
-          <rect x="8" y="96" width="84" height="3" fill="#c89020" opacity="0.6" />
-          <rect x="26" y="96" width="48" height="3" fill="#e8b830" />
-
-          {/* 木目ライン */}
-          {[115, 130, 148, 163].map((y, i) => (
-            <line key={i} x1="26" y1={y} x2="74" y2={y}
-              stroke="rgba(100,60,20,0.18)" strokeWidth="1" />
+          {/* 木目 */}
+          {[120, 138, 155, 172].map((y, i) => (
+            <line key={i} x1="28" y1={y} x2="82" y2={y}
+              stroke="rgba(100,60,20,0.15)" strokeWidth="1" />
           ))}
 
-          {/* シャカシャカ時の棒 */}
-          {shaking && [42, 47, 52, 57, 62].map((x, i) => (
-            <rect key={i} x={x} y={i % 2 === 0 ? 2 : 5} width="4" height={i % 2 === 0 ? 14 : 10}
-              rx="1" fill="#e8d080" opacity={0.5 + i * 0.1}
-              style={{ animation: `sticksBounce ${0.3 + i * 0.05}s ease-in-out infinite` }}
+          {/* シャカシャカ時の棒（穴から見える） */}
+          {shaking && [46, 52, 58, 64, 70].map((x, i) => (
+            <rect key={i} x={x} y={i % 2 === 0 ? -2 : 2} width="5"
+              height={i % 2 === 0 ? 18 : 13}
+              rx="1.5" fill="#f0e090" opacity={0.45 + i * 0.1}
+              style={{ animation: `sticksBounce ${0.28 + i * 0.04}s ease-in-out infinite` }}
             />
           ))}
 
           <defs>
-            <linearGradient id="woodLeft" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stopColor="#7a5020" />
-              <stop offset="100%" stopColor="#9a6828" />
+            <linearGradient id="wL" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stopColor="#6a4418" /><stop offset="100%" stopColor="#8a5c24" />
             </linearGradient>
-            <linearGradient id="woodCenter" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stopColor="#c8903a" />
-              <stop offset="30%" stopColor="#e0b060" />
-              <stop offset="60%" stopColor="#d4a040" />
-              <stop offset="100%" stopColor="#b07830" />
+            <linearGradient id="wC" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stopColor="#be8432" /><stop offset="25%" stopColor="#dca84e" />
+              <stop offset="55%" stopColor="#e8bc60" /><stop offset="100%" stopColor="#b07030" />
             </linearGradient>
-            <linearGradient id="woodRight" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stopColor="#9a6828" />
-              <stop offset="100%" stopColor="#7a5020" />
+            <linearGradient id="wR" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stopColor="#8a5c24" /><stop offset="100%" stopColor="#6a4418" />
             </linearGradient>
-            <linearGradient id="woodTop" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#e8c070" />
-              <stop offset="100%" stopColor="#c09040" />
+            <linearGradient id="wTop" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#ecc868" /><stop offset="100%" stopColor="#c09040" />
             </linearGradient>
-            <linearGradient id="woodBottom" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#a07030" />
-              <stop offset="100%" stopColor="#7a5020" />
+            <linearGradient id="wBot" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#9a6830" /><stop offset="100%" stopColor="#7a5020" />
             </linearGradient>
-            <linearGradient id="goldBand" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#f0d060" />
-              <stop offset="30%" stopColor="#e8c040" />
-              <stop offset="70%" stopColor="#d4a820" />
+            <linearGradient id="gBand" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#f4d458" /><stop offset="40%" stopColor="#e8c038" />
               <stop offset="100%" stopColor="#c09018" />
             </linearGradient>
           </defs>
         </svg>
-
-        {/* 棒が出てくる */}
-        {tilting && (
-          <div style={{
-            position: 'absolute',
-            top: '-8px',
-            left: '50%',
-            transform: 'translateX(-50%) rotate(38deg)',
-            transformOrigin: 'bottom center',
-            overflow: 'hidden',
-            animation: 'stickSlide 1.4s cubic-bezier(0.22,1,0.36,1) 0.2s forwards',
-            height: 0,
-          }}>
-            <svg width="16" height="130" viewBox="0 0 16 130">
-              {/* 棒の影 */}
-              <rect x="9" y="0" width="4" height="130" rx="2" fill="rgba(0,0,0,0.15)" />
-              {/* 棒本体 */}
-              <rect x="3" y="0" width="10" height="130" rx="3"
-                fill="url(#stickGrad)" />
-              {/* 光沢 */}
-              <rect x="4" y="0" width="3" height="130" rx="1.5"
-                fill="rgba(255,255,255,0.25)" />
-              {/* 番号 */}
-              <text x="8" y="30" textAnchor="middle"
-                fontSize="9" fontWeight="bold" fill="#5a3000"
-                fontFamily="'Hiragino Mincho ProN', serif"
-                style={{ animation: 'stickFadeNum 1.5s ease forwards' }}>
-                {stickNumber}
-              </text>
-              <defs>
-                <linearGradient id="stickGrad" x1="0" y1="0" x2="1" y2="0">
-                  <stop offset="0%" stopColor="#d4b870" />
-                  <stop offset="40%" stopColor="#f0e0a0" />
-                  <stop offset="100%" stopColor="#c8a860" />
-                </linearGradient>
-              </defs>
-            </svg>
-          </div>
-        )}
       </div>
     </div>
   )
