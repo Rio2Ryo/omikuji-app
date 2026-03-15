@@ -214,6 +214,59 @@ const CSS_ANIM = `
     10%  { opacity: 0.45; }
     100% { transform: translateY(110vh); opacity: 0; }
   }
+
+  /* ===== 結果画面 新演出 ===== */
+  /* 暗転→解放 */
+  @keyframes flashReveal {
+    0%   { opacity: 0; }
+    15%  { opacity: 1; background: rgba(255,255,255,0.95); }
+    40%  { opacity: 1; background: rgba(255,255,255,0.0); }
+    100% { opacity: 1; }
+  }
+  /* 掛け軸が上からするするっと降りてくる */
+  @keyframes scrollUnroll {
+    0%   { transform: scaleY(0) translateY(-20px); opacity: 0; transform-origin: top; }
+    60%  { opacity: 1; }
+    100% { transform: scaleY(1) translateY(0); opacity: 1; transform-origin: top; }
+  }
+  /* 運勢文字：墨が滲むように出現 */
+  @keyframes inkBloom {
+    0%   { opacity: 0; filter: blur(12px); transform: scale(1.3); }
+    40%  { opacity: 0.7; filter: blur(4px); transform: scale(1.05); }
+    100% { opacity: 1; filter: blur(0px); transform: scale(1); }
+  }
+  /* 鳥居パーティクルが上に流れる */
+  @keyframes particleFloat {
+    0%   { transform: translateY(0px) translateX(0px); opacity: 0; }
+    10%  { opacity: 0.6; }
+    100% { transform: translateY(-120vh) translateX(var(--dx, 20px)); opacity: 0; }
+  }
+  /* 光の放射（大吉用） */
+  @keyframes burstRay {
+    0%   { transform: rotate(var(--r,0deg)) scaleX(0); opacity: 0; }
+    30%  { opacity: 0.7; }
+    100% { transform: rotate(var(--r,0deg)) scaleX(1); opacity: 0; }
+  }
+  /* アイテム登場 */
+  @keyframes itemReveal {
+    0%   { opacity: 0; transform: translateY(10px) scale(0.9); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  /* メッセージ テキストフェード */
+  @keyframes textFadeIn {
+    0%   { opacity: 0; letter-spacing: 0.5em; }
+    100% { opacity: 1; letter-spacing: 0.06em; }
+  }
+  /* 鳥居シルエットの揺れ */
+  @keyframes toriiBreath {
+    0%,100% { opacity: 0.04; transform: scale(1); }
+    50%     { opacity: 0.07; transform: scale(1.01); }
+  }
+  /* HISTORY行 */
+  @keyframes histFadeIn {
+    from { opacity: 0; transform: translateX(-8px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
 `
 
 // ── おみくじ筒 SVG（Lottie風・高品質アニメ版）─────────────────
@@ -399,42 +452,105 @@ function OmikujiBox({ shaking, tilting, stickNumber }: {
 }
 
 
-// 大吉：紙吹雪
+// 大吉：紙吹雪（強化版）
 function Confetti() {
-  const colors = ['#FFD700','#FF6B6B','#FF9FF3','#54A0FF','#5CE65C','#FFA500','#fff','#c8a0ff']
+  const colors = ['#FFD700','#FFC300','#FF9500','#fff8dc','#ffe066','#ffd700','#fff','#f0c040']
   return (
     <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', overflow: 'hidden', zIndex: 10 }}>
-      {Array.from({ length: 60 }, (_, i) => (
+      {/* 光の放射ライン */}
+      {Array.from({ length: 12 }, (_, i) => (
+        <div key={`ray-${i}`} style={{
+          position: 'absolute', left: '50%', top: '40%',
+          width: '2px', height: '80vw',
+          background: 'linear-gradient(to bottom, rgba(255,220,80,0.6), transparent)',
+          transformOrigin: 'top center',
+          '--r': `${i * 30}deg`,
+          animation: `burstRay 1.2s ease-out ${i * 0.05}s forwards`,
+        } as React.CSSProperties} />
+      ))}
+      {Array.from({ length: 80 }, (_, i) => (
         <div key={i} style={{
           position: 'absolute',
           left: `${Math.random() * 100}%`,
           top: '-12px',
-          width: `${4 + Math.random() * 8}px`,
-          height: `${6 + Math.random() * 12}px`,
+          width: `${3 + Math.random() * 7}px`,
+          height: `${5 + Math.random() * 10}px`,
           background: colors[i % colors.length],
-          borderRadius: Math.random() > 0.5 ? '50%' : '2px',
-          animation: `confettiFall ${1.5 + Math.random() * 3}s ease-in ${i * 0.04}s forwards`,
+          borderRadius: Math.random() > 0.4 ? '50%' : '1px',
+          opacity: 0.9,
+          animation: `confettiFall ${1.2 + Math.random() * 2.5}s ease-in ${i * 0.03}s forwards`,
         }} />
       ))}
     </div>
   )
 }
 
-// 凶：雨
+// 凶：雨（強化版）
 function Rain() {
   return (
     <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', overflow: 'hidden', zIndex: 10 }}>
-      {Array.from({ length: 35 }, (_, i) => (
+      {Array.from({ length: 50 }, (_, i) => (
         <div key={i} style={{
           position: 'absolute',
-          left: `${Math.random() * 100}%`,
+          left: `${Math.random() * 110 - 5}%`,
           top: '-30px',
           width: '1px',
-          height: `${20 + Math.random() * 35}px`,
-          background: 'linear-gradient(to bottom, transparent, rgba(140,170,210,0.4))',
-          animation: `rainFall ${0.8 + Math.random() * 1.4}s linear ${i * 0.1}s infinite`,
+          height: `${25 + Math.random() * 40}px`,
+          background: 'linear-gradient(to bottom, transparent, rgba(120,150,200,0.5))',
+          animation: `rainFall ${0.6 + Math.random() * 1.2}s linear ${i * 0.07}s infinite`,
         }} />
       ))}
+    </div>
+  )
+}
+
+// 背景パーティクル（全運勢共通）
+function BgParticles({ color }: { color: string }) {
+  return (
+    <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', overflow: 'hidden', zIndex: 1 }}>
+      {Array.from({ length: 18 }, (_, i) => (
+        <div key={i} style={{
+          position: 'absolute',
+          left: `${10 + Math.random() * 80}%`,
+          bottom: '-20px',
+          width: `${3 + Math.random() * 5}px`,
+          height: `${3 + Math.random() * 5}px`,
+          borderRadius: '50%',
+          background: color,
+          opacity: 0,
+          '--dx': `${(Math.random() - 0.5) * 60}px`,
+          animation: `particleFloat ${3 + Math.random() * 4}s ease-out ${i * 0.3}s infinite`,
+        } as React.CSSProperties} />
+      ))}
+    </div>
+  )
+}
+
+// 鳥居シルエット（背景装飾）
+function ToriiSilhouette({ color }: { color: string }) {
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none',
+      display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
+      overflow: 'hidden',
+    }}>
+      <svg width="340" height="420" viewBox="0 0 340 420" fill="none"
+        style={{ animation: 'toriiBreath 5s ease-in-out infinite' }}>
+        {/* 笠木（上の横木） */}
+        <rect x="10" y="60" width="320" height="18" rx="4" fill={color} />
+        {/* 貫（2段目横木） */}
+        <rect x="40" y="100" width="260" height="12" rx="3" fill={color} />
+        {/* 左柱 */}
+        <rect x="60" y="108" width="22" height="312" rx="6" fill={color} />
+        {/* 右柱 */}
+        <rect x="258" y="108" width="22" height="312" rx="6" fill={color} />
+        {/* 嶋木（上に伸びる棒） */}
+        <rect x="145" y="10" width="14" height="54" rx="3" fill={color} />
+        {/* 左島木 */}
+        <rect x="58" y="40" width="14" height="24" rx="3" fill={color} />
+        {/* 右島木 */}
+        <rect x="268" y="40" width="14" height="24" rx="3" fill={color} />
+      </svg>
     </div>
   )
 }
@@ -808,113 +924,156 @@ export default function OmikujiApp() {
           {/* 結果 */}
           {isResult && (
             <div style={{
-              animation: 'fadeInUp 0.5s ease forwards',
-              width: '100%', maxWidth: '420px',
-              position: 'relative', zIndex: 1,
-              padding: '0 0 4px',
+              animation: 'flashReveal 0.8s ease forwards',
+              width: '100%', maxWidth: '400px',
+              position: 'relative', zIndex: 2,
+              padding: '0 0 20px',
             }}>
-              <p style={{
-                textAlign: 'center', fontSize: '11px', fontWeight: '700',
-                letterSpacing: '0.35em', marginBottom: '6px',
-                color: isKyo ? 'rgba(180,195,215,0.45)' : `${fortune.accent}80`,
-                fontFamily: "'Helvetica Neue', Arial, sans-serif",
-              }}>NO. {stickNumber}</p>
+              {/* 鳥居シルエット */}
+              <ToriiSilhouette color={isKyo ? '#8090a8' : fortune.resultColor} />
 
-              {/* 運勢文字 */}
+              {/* 背景パーティクル */}
+              {showEffects && <BgParticles color={isDaikichi ? 'rgba(255,210,0,0.7)' : isKyo ? 'rgba(100,130,180,0.5)' : `${fortune.resultColor}99`} />}
+
+              {/* 番号 */}
+              <p style={{
+                textAlign: 'center', fontSize: '11px', fontWeight: '600',
+                letterSpacing: '0.45em', marginBottom: '10px',
+                color: isKyo ? 'rgba(160,180,210,0.4)' : `${fortune.accent}60`,
+                fontFamily: "'Helvetica Neue', Arial, sans-serif",
+                animation: 'textFadeIn 0.6s ease 0.2s both',
+              }}>— {stickNumber} 番 —</p>
+
+              {/* 運勢文字（墨滲み演出） */}
               <div style={{
                 textAlign: 'center',
-                fontSize: 'clamp(80px, 24vw, 116px)',
+                fontSize: 'clamp(88px, 26vw, 128px)',
                 fontWeight: '900',
                 color: fortune.resultColor,
-                lineHeight: 1, marginBottom: '6px',
-                animation: `${fortune.anim}, ${fortune.shimmer} 2.5s ease-in-out 0.6s infinite`,
+                lineHeight: 1,
+                marginBottom: '4px',
+                animation: `inkBloom 0.9s cubic-bezier(0.2,0.8,0.3,1) 0.1s both, ${fortune.shimmer} 3s ease-in-out 1s infinite`,
                 fontFamily: "'Hiragino Mincho ProN', 'Yu Mincho', 'Georgia', serif",
+                position: 'relative', zIndex: 2,
               }}>{fortune.result}</div>
 
               <p style={{
-                textAlign: 'center', fontSize: '12px', letterSpacing: '0.4em',
-                marginBottom: '20px',
-                color: isKyo ? 'rgba(180,195,215,0.4)' : `${fortune.accent}70`,
+                textAlign: 'center', fontSize: '11px', letterSpacing: '0.5em',
+                marginBottom: '24px',
+                color: isKyo ? 'rgba(160,180,210,0.4)' : `${fortune.accent}60`,
+                animation: 'textFadeIn 0.6s ease 0.8s both',
               }}>{fortune.reading}</p>
 
-              {/* カード */}
+              {/* 掛け軸カード */}
               <div style={{
+                position: 'relative', zIndex: 2,
                 background: fortune.cardBg,
-                border: `1px solid ${fortune.cardBorder}`,
-                borderRadius: '14px', padding: '20px',
-                marginBottom: '14px',
-                backdropFilter: 'blur(16px)',
+                borderRadius: '3px 3px 60px 60px / 3px 3px 30px 30px',
+                padding: '28px 24px 32px',
+                marginBottom: '16px',
+                backdropFilter: 'blur(20px)',
                 boxShadow: isDaikichi
-                  ? '0 6px 30px rgba(220,170,0,0.15)'
+                  ? '0 8px 40px rgba(200,150,0,0.2), 0 2px 0 rgba(200,150,0,0.3) inset'
                   : isKyo
-                  ? '0 6px 30px rgba(0,0,0,0.5)'
-                  : '0 4px 20px rgba(30,90,159,0.08)',
+                  ? '0 8px 40px rgba(0,0,0,0.6), 0 0 0 1px rgba(100,120,160,0.15) inset'
+                  : `0 8px 40px ${fortune.accent}20`,
+                border: `1px solid ${fortune.cardBorder}60`,
+                animation: 'scrollUnroll 0.7s cubic-bezier(0.16,1,0.3,1) 0.3s both',
+                overflow: 'hidden',
               }}>
+                {/* 上部装飾ライン */}
+                <div style={{
+                  position: 'absolute', top: 0, left: 0, right: 0, height: '4px',
+                  background: isDaikichi
+                    ? 'linear-gradient(90deg, transparent, #f0c030, #ffe060, #f0c030, transparent)'
+                    : isKyo
+                    ? 'linear-gradient(90deg, transparent, #506070, #7090a8, #506070, transparent)'
+                    : `linear-gradient(90deg, transparent, ${fortune.cardBorder}, transparent)`,
+                }} />
+
                 {/* メッセージ */}
                 <p style={{
-                  fontSize: '14px', lineHeight: '1.9',
-                  color: isKyo ? 'rgba(195,210,228,0.88)' : fortune.accent,
-                  marginBottom: '18px',
+                  fontSize: '15px', lineHeight: '2.0',
+                  color: isKyo ? 'rgba(200,215,235,0.9)' : fortune.accent,
+                  marginBottom: '24px',
                   textAlign: 'center',
                   fontFamily: "'Hiragino Mincho ProN', 'Yu Mincho', serif",
+                  animation: 'textFadeIn 0.8s ease 0.9s both',
+                  letterSpacing: '0.06em',
                 }}>{fortune.message}</p>
 
-                {/* ラッキーアイテム（全運勢共通） */}
-                <div style={{
-                  borderTop: `1px solid ${fortune.cardBorder}70`,
-                  paddingTop: '16px',
-                  textAlign: 'center',
-                }}>
-                  <div style={{
-                    fontSize: '10px', fontWeight: '700',
-                    letterSpacing: '0.4em', marginBottom: '12px',
-                    color: isKyo ? 'rgba(160,180,210,0.55)' : `${fortune.accent}80`,
+                {/* お守りアイテム */}
+                <div style={{ textAlign: 'center', animation: 'itemReveal 0.6s ease 1.1s both' }}>
+                  <p style={{
+                    fontSize: '9px', fontWeight: '700', letterSpacing: '0.5em',
+                    color: isKyo ? 'rgba(140,165,200,0.5)' : `${fortune.accent}60`,
+                    marginBottom: '10px',
                     fontFamily: "'Helvetica Neue', Arial, sans-serif",
-                  }}>LUCKY ITEM</div>
+                  }}>TODAY'S CHARM</p>
                   <div style={{
-                    display: 'inline-block',
+                    display: 'inline-flex', alignItems: 'center', gap: '8px',
+                    padding: '12px 28px',
                     background: isDaikichi
-                      ? 'rgba(255,210,0,0.12)'
+                      ? 'rgba(255,220,40,0.10)'
                       : isKyo
-                      ? 'rgba(80,100,130,0.3)'
-                      : `${fortune.accent}12`,
-                    borderRadius: '12px',
-                    padding: '14px 32px',
-                    border: `1px solid ${fortune.cardBorder}70`,
-                    minWidth: '160px',
+                      ? 'rgba(60,80,110,0.4)'
+                      : `${fortune.accent}0f`,
+                    borderRadius: '40px',
+                    border: `1px solid ${fortune.cardBorder}50`,
                   }}>
+                    <div style={{
+                      width: '6px', height: '6px', borderRadius: '50%',
+                      background: fortune.resultColor, opacity: 0.7, flexShrink: 0,
+                    }} />
                     <span style={{
-                      fontSize: '20px', fontWeight: '700',
-                      color: isKyo ? 'rgba(190,205,225,0.85)' : fortune.resultColor,
+                      fontSize: '19px', fontWeight: '700',
+                      color: isKyo ? 'rgba(195,210,230,0.9)' : fortune.resultColor,
                       fontFamily: "'Hiragino Sans', sans-serif",
                       letterSpacing: '0.05em',
                     }}>{luckyItem}</span>
+                    <div style={{
+                      width: '6px', height: '6px', borderRadius: '50%',
+                      background: fortune.resultColor, opacity: 0.7, flexShrink: 0,
+                    }} />
                   </div>
                 </div>
+
+                {/* 下部装飾ライン */}
+                <div style={{
+                  position: 'absolute', bottom: 0, left: 0, right: 0, height: '4px',
+                  background: isDaikichi
+                    ? 'linear-gradient(90deg, transparent, #f0c030, #ffe060, #f0c030, transparent)'
+                    : isKyo
+                    ? 'linear-gradient(90deg, transparent, #506070, #7090a8, #506070, transparent)'
+                    : `linear-gradient(90deg, transparent, ${fortune.cardBorder}, transparent)`,
+                }} />
               </div>
 
-              {/* 履歴（今回を除く直近分） */}
+              {/* 履歴 */}
               {history.length > 1 && (
                 <div style={{
+                  position: 'relative', zIndex: 2,
                   marginBottom: '14px',
-                  padding: '12px 14px',
-                  background: isKyo ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
+                  padding: '12px 16px',
+                  background: isKyo ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.035)',
                   borderRadius: '12px',
+                  border: `1px solid ${isKyo ? 'rgba(100,130,170,0.12)' : fortune.cardBorder + '30'}`,
                 }}>
                   <p style={{
-                    fontSize: '10px', fontWeight: '700', letterSpacing: '0.15em',
-                    color: isKyo ? 'rgba(180,200,230,0.5)' : `${fortune.accent}80`,
-                    marginBottom: '8px',
+                    fontSize: '9px', fontWeight: '700', letterSpacing: '0.4em',
+                    color: isKyo ? 'rgba(160,185,215,0.4)' : `${fortune.accent}60`,
+                    marginBottom: '10px',
+                    fontFamily: "'Helvetica Neue', Arial, sans-serif",
                   }}>HISTORY</p>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '7px' }}>
                     {history.slice(1, 6).map((rec, i) => (
                       <div key={i} style={{
-                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                        fontSize: '12px',
+                        display: 'flex', alignItems: 'center', gap: '10px',
+                        animation: `histFadeIn 0.4s ease ${i * 0.07}s both`,
                       }}>
-                        <span style={{ color: isKyo ? 'rgba(180,200,230,0.4)' : 'rgba(80,100,130,0.5)', fontSize: '10px', minWidth: '60px' }}>{rec.date}</span>
-                        <span style={{ fontWeight: '700', color: rec.resultColor, minWidth: '32px', textAlign: 'center', fontSize: '13px' }}>{rec.result}</span>
-                        <span style={{ color: isKyo ? 'rgba(180,200,230,0.5)' : 'rgba(80,100,130,0.6)', fontSize: '11px', flex: 1, textAlign: 'right' }}>{rec.luckyItem}</span>
+                        <span style={{ fontSize: '10px', color: isKyo ? 'rgba(160,185,215,0.35)' : 'rgba(80,100,130,0.4)', minWidth: '52px', letterSpacing: '0.02em' }}>{rec.date}</span>
+                        <span style={{ fontWeight: '800', color: rec.resultColor, minWidth: '28px', fontSize: '13px', fontFamily: 'serif' }}>{rec.result}</span>
+                        <span style={{ fontSize: '11px', color: isKyo ? 'rgba(160,185,215,0.5)' : 'rgba(80,100,130,0.55)', flex: 1, textAlign: 'right', letterSpacing: '0.03em' }}>{rec.luckyItem}</span>
                       </div>
                     ))}
                   </div>
@@ -926,15 +1085,18 @@ export default function OmikujiApp() {
                 onClick={handleReset}
                 style={{
                   display: 'block', width: '100%', padding: '15px',
-                  fontSize: '15px', fontWeight: '600',
-                  letterSpacing: '0.2em',
-                  background: isKyo ? 'rgba(50,65,90,0.85)' : K.navy,
-                  color: K.white, border: 'none', borderRadius: '10px',
-                  cursor: 'pointer', transition: 'all 0.2s',
-                  boxShadow: isKyo ? 'none' : `0 4px 18px ${K.navy}50`,
+                  fontSize: '14px', fontWeight: '700',
+                  letterSpacing: '0.25em',
+                  background: isKyo
+                    ? 'linear-gradient(135deg, #1e2a40, #2a3a54)'
+                    : `linear-gradient(135deg, ${K.navy}, #1a3a70)`,
+                  color: K.white, border: 'none', borderRadius: '12px',
+                  cursor: 'pointer', transition: 'all 0.25s',
+                  boxShadow: isKyo ? '0 4px 16px rgba(0,0,0,0.4)' : `0 4px 20px ${K.navy}60`,
                   fontFamily: "'Hiragino Sans', sans-serif",
+                  position: 'relative', zIndex: 2,
                 }}
-                onMouseEnter={e => { e.currentTarget.style.opacity = '0.82'; e.currentTarget.style.transform = 'translateY(-1px)' }}
+                onMouseEnter={e => { e.currentTarget.style.opacity = '0.85'; e.currentTarget.style.transform = 'translateY(-2px)' }}
                 onMouseLeave={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.transform = 'translateY(0)' }}
               >
                 もう一度引く
@@ -942,15 +1104,15 @@ export default function OmikujiApp() {
 
               {/* カウントダウン */}
               {countdown !== null && countdown > 0 && (
-                <p style={{ textAlign: 'center', fontSize: '12px', color: isKyo ? 'rgba(180,195,215,0.5)' : `${fortune.accent}70`, marginTop: '10px', letterSpacing: '0.1em' }}>
-                  {countdown}秒後に移動します...
+                <p style={{ textAlign: 'center', fontSize: '11px', color: isKyo ? 'rgba(160,185,215,0.4)' : `${fortune.accent}60`, marginTop: '10px', letterSpacing: '0.15em' }}>
+                  {countdown}秒後に移動します
                 </p>
               )}
 
-              {/* 管理ボタン（結果画面） */}
+              {/* 管理ボタン */}
               <button
                 onClick={() => setShowAdmin(true)}
-                style={{ display: 'block', width: '100%', marginTop: '8px', padding: '8px', fontSize: '11px', background: 'transparent', color: 'rgba(100,130,180,0.4)', border: '1px solid transparent', borderRadius: '6px', cursor: 'pointer', letterSpacing: '0.1em' }}
+                style={{ display: 'block', width: '100%', marginTop: '8px', padding: '8px', fontSize: '11px', background: 'transparent', color: 'rgba(100,130,180,0.35)', border: '1px solid transparent', borderRadius: '6px', cursor: 'pointer', letterSpacing: '0.1em', position: 'relative', zIndex: 2 }}
               >⚙ 管理</button>
             </div>
           )}
