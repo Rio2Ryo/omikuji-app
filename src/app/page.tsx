@@ -34,7 +34,7 @@ const LUCKY_ITEMS = [
 const FORTUNES = [
   {
     id: 'daikichi', result: '大吉', reading: 'だいきち',
-    message: '天が味方している日。あなたの直感は今日、驚くほど正確です。躊躇わず動いてください。扉は、あなたが手を伸ばした瞬間に開きます。',
+    message: '直感を信じて動いて。今日、扉は開く。',
     resultColor: '#c07010',
     bg: 'linear-gradient(150deg, #fffbf0 0%, #fff3c0 40%, #ffe080 100%)',
     cardBg: 'rgba(255,255,255,0.92)', cardBorder: '#e8c030',
@@ -43,7 +43,7 @@ const FORTUNES = [
   },
   {
     id: 'kichi', result: '吉', reading: 'きち',
-    message: '風が良い方向に吹いています。今日は自分から動くことで、思っていた以上の結果が返ってくるでしょう。小さな一歩が未来を変えます。',
+    message: '自分から動こう。小さな一歩が未来を変える。',
     resultColor: K.blue,
     bg: `linear-gradient(150deg, ${K.bg} 0%, #ddeeff 100%)`,
     cardBg: 'rgba(255,255,255,0.92)', cardBorder: K.light,
@@ -52,7 +52,7 @@ const FORTUNES = [
   },
   {
     id: 'chukichi', result: '中吉', reading: 'ちゅうきち',
-    message: '穏やかで確かな運気。急がなくていい。今日は焦らず、目の前のことをひとつひとつ丁寧に。その積み重ねが、気づけば大きな力になっています。',
+    message: '焦らなくていい。丁寧に積み重ねる日。',
     resultColor: '#2a7a40',
     bg: 'linear-gradient(150deg, #f0faf4 0%, #c8ecd4 100%)',
     cardBg: 'rgba(255,255,255,0.92)', cardBorder: '#70c888',
@@ -61,7 +61,7 @@ const FORTUNES = [
   },
   {
     id: 'shokichi', result: '小吉', reading: 'しょうきち',
-    message: '柔らかい光が差し込む日。誰かへの小さな親切が、思わぬところで実を結ぶかもしれません。今日は「受け取る」より「与える」ことを意識して。',
+    message: '与えることを意識して。親切が実を結ぶ。',
     resultColor: '#1a70a0',
     bg: 'linear-gradient(150deg, #f0f6fc 0%, #cce0f4 100%)',
     cardBg: 'rgba(255,255,255,0.92)', cardBorder: '#60a8d8',
@@ -70,7 +70,7 @@ const FORTUNES = [
   },
   {
     id: 'suekichi', result: '末吉', reading: 'すえきち',
-    message: '今はまだ、種が土の中にいる時間。焦らなくていい。水をやり続けた先に、必ず芽が出る瞬間があります。今日はその土台を作る日です。',
+    message: '今は土台を作る時間。芽は必ず出る。',
     resultColor: '#7040a0',
     bg: 'linear-gradient(150deg, #f6f0fc 0%, #e0ccf0 100%)',
     cardBg: 'rgba(255,255,255,0.92)', cardBorder: '#a870d0',
@@ -79,7 +79,7 @@ const FORTUNES = [
   },
   {
     id: 'kyo', result: '凶', reading: 'きょう',
-    message: '嵐の中にいる日。でも、嵐は必ず過ぎ去ります。今日は守りに徹し、エネルギーを温存して。明日のための静寂を、今日は大切にしてください。',
+    message: '嵐は過ぎ去る。今日は守りに徹して。',
     resultColor: '#505860',
     bg: 'linear-gradient(150deg, #1a2030 0%, #0f1520 100%)',
     cardBg: 'rgba(30,36,50,0.92)', cardBorder: '#404858',
@@ -573,7 +573,7 @@ function CardAdminPanel({ uuid, onClose, onSaved }: { uuid: string; onClose: () 
 export default function OmikujiApp() {
   const [phase, setPhase] = useState<Phase>('shaking')
   const [fortune, setFortune] = useState(() => FORTUNES[Math.floor(Math.random() * FORTUNES.length)])
-  const [stickNumber, setStickNumber] = useState(() => Math.floor(Math.random() * 50) + 1)
+  const [stickNumber, setStickNumber] = useState(() => Math.floor(Math.random() * 20) + 1)
   const [luckyItem, setLuckyItem] = useState<string>(getLucky)
   const [showEffects, setShowEffects] = useState(false)
   const [shaking, setShaking] = useState(true)
@@ -745,7 +745,7 @@ export default function OmikujiApp() {
                     textShadow: '0 1px 8px rgba(0,0,0,0.8)',
                     transition: 'all 0.4s',
                   }}>
-                    {phase === 'shaking' ? 'シャカシャカ…' : `第 ${stickNumber} 番`}
+                    {phase === 'shaking' ? 'シャカシャカ…' : `${stickNumber} 番`}
                   </p>
                 </div>
               </div>
