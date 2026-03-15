@@ -5,16 +5,17 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "postinstall": ""
   },
   "dependencies": {
-    "@react-three/drei": "^10.7.7",
-    "@react-three/fiber": "^9.5.0",
-    "@types/three": "^0.183.1",
+    "@react-three/drei": "10.7.7",
+    "@react-three/fiber": "9.5.0",
+    "@types/three": "0.169.0",
     "next": "14.2.5",
     "react": "^18",
     "react-dom": "^18",
-    "three": "^0.183.2"
+    "three": "0.169.0"
   },
   "devDependencies": {
     "@types/node": "^20",
