@@ -1,38 +1,33 @@
 import { NextResponse } from 'next/server'
-import { readFileSync, writeFileSync, existsSync } from 'fs'
-import { join } from 'path'
 
-const CONFIG_PATH = join(process.cwd(), 'redirect-config.json')
+export const runtime = 'edge'
 
 export interface RedirectConfig {
   default: string
-  cards: Record<string, string>  // cardId -> url
+  cards: Record<string, string>
   updatedAt: string
 }
 
-function getConfig(): RedirectConfig {
-  if (!existsSync(CONFIG_PATH)) {
-    const d: RedirectConfig = { default: 'https://kataomoi.org', cards: {}, updatedAt: new Date().toISOString() }
-    writeFileSync(CONFIG_PATH, JSON.stringify(d, null, 2))
-    return d
-  }
-  const raw = JSON.parse(readFileSync(CONFIG_PATH, 'utf8'))
-  // migrate legacy format
-  if (typeof raw.url === 'string' && !raw.default) {
-    return { default: raw.url, cards: {}, updatedAt: raw.updatedAt || new Date().toISOString() }
-  }
-  return { default: raw.default || 'https://kataomoi.org', cards: raw.cards || {}, updatedAt: raw.updatedAt }
+// デフォルト設定
+const DEFAULT_CONFIG: RedirectConfig = {
+  default: 'https://kataomoi.org',
+  cards: {},
+  updatedAt: new Date().toISOString(),
 }
+
+// インメモリキャッシュ（サーバー再起動で消えるが、Vercelではインスタンスごとに持つ）
+// 本番環境では Vercel KV や Upstash Redis への移行を推奨
+let memoryConfig: RedirectConfig = { ...DEFAULT_CONFIG }
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const cardId = searchParams.get('cardId')
-  const config = getConfig()
+
   if (cardId) {
-    const url = config.cards[cardId] || config.default
-    return NextResponse.json({ url, cardId, isCustom: !!config.cards[cardId] })
+    const url = memoryConfig.cards[cardId] || memoryConfig.default
+    return NextResponse.json({ url, cardId, isCustom: !!memoryConfig.cards[cardId] })
   }
-  return NextResponse.json(config)
+  return NextResponse.json(memoryConfig)
 }
 
 export async function POST(request: Request) {
@@ -42,28 +37,26 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const config = getConfig()
+  const config = { ...memoryConfig }
 
-  // 一括設定: { action: 'setAll', url, cardIds?: string[] }
   if (body.action === 'setAll') {
     try { new URL(body.url) } catch { return NextResponse.json({ error: 'Invalid URL' }, { status: 400 }) }
     if (body.cardIds && Array.isArray(body.cardIds)) {
       for (const id of body.cardIds) config.cards[id] = body.url
     } else {
       config.default = body.url
-      config.cards = {}  // 全カードをデフォルトにリセット
+      config.cards = {}
     }
     config.updatedAt = new Date().toISOString()
-    writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2))
+    memoryConfig = config
     return NextResponse.json({ ok: true, ...config })
   }
 
-  // 個別設定: { action: 'setCard', cardId, url } or { action: 'setDefault', url }
   if (body.action === 'setCard') {
     try { new URL(body.url) } catch { return NextResponse.json({ error: 'Invalid URL' }, { status: 400 }) }
-    config.cards[body.cardId] = body.url
+    config.cards = { ...config.cards, [body.cardId]: body.url }
     config.updatedAt = new Date().toISOString()
-    writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2))
+    memoryConfig = config
     return NextResponse.json({ ok: true, ...config })
   }
 
@@ -71,15 +64,14 @@ export async function POST(request: Request) {
     try { new URL(body.url) } catch { return NextResponse.json({ error: 'Invalid URL' }, { status: 400 }) }
     config.default = body.url
     config.updatedAt = new Date().toISOString()
-    writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2))
+    memoryConfig = config
     return NextResponse.json({ ok: true, ...config })
   }
 
-  // 複数カード削除
   if (body.action === 'deleteCards') {
     for (const id of (body.cardIds || [])) delete config.cards[id]
     config.updatedAt = new Date().toISOString()
-    writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2))
+    memoryConfig = config
     return NextResponse.json({ ok: true, ...config })
   }
 
