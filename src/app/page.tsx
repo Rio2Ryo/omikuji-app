@@ -451,12 +451,17 @@ export default function OmikujiApp() {
   const isDaikichi = fortune.id === 'daikichi'
   const isKyo = fortune.id === 'kyo'
 
-  // URLパラメータからcardIdを取得してリダイレクトURL取得
+  // URLパラメータからuuidを取得してリダイレクトURL取得
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
-    const cardId = params.get('cardId')
-    const url = cardId ? `/api/redirect?cardId=${encodeURIComponent(cardId)}` : '/api/redirect'
-    fetch(url).then(r => r.json()).then(d => setRedirectUrl(d.url || d.default || 'https://kataomoi.org')).catch(() => {})
+    const uuid = params.get('uuid') || params.get('cardId')
+    if (uuid) {
+      fetch(`/api/redirect?uuid=${encodeURIComponent(uuid)}`)
+        .then(r => r.json())
+        .then(d => { if (d.url) setRedirectUrl(d.url) })
+        .catch(() => {})
+    }
+    // uuidなし = デフォルトURL（kataomoi.org）のまま
   }, [])
 
   // 結果表示後3秒でリダイレクト（管理画面が開いている間は停止）

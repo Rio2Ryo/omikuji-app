@@ -9,17 +9,21 @@ const K = {
   white: '#ffffff',
 }
 
+interface CardConfig {
+  uuid: string
+  label: string
+  url: string
+  createdAt: string
+}
+
 interface Config {
-  default: string
-  cards: Record<string, string>
+  cards: Record<string, CardConfig>
   updatedAt: string
 }
 
 interface AdminPanelProps {
   onClose: () => void
 }
-
-const CARD_IDS = Array.from({ length: 20 }, (_, i) => String(i + 1))
 
 export default function AdminPanel({ onClose }: AdminPanelProps) {
   const [password, setPassword] = useState('')
@@ -29,26 +33,39 @@ export default function AdminPanel({ onClose }: AdminPanelProps) {
   const [loading, setLoading] = useState(false)
   const [msg, setMsg] = useState('')
 
-  // 個別編集
-  const [editCard, setEditCard] = useState<string | null>(null)
+  // 新規カード作成フォーム
+  const [newLabel, setNewLabel] = useState('')
+  const [newUrl, setNewUrl] = useState('')
+
+  // 編集中カード
+  const [editUuid, setEditUuid] = useState<string | null>(null)
+  const [editLabel, setEditLabel] = useState('')
   const [editUrl, setEditUrl] = useState('')
 
   // 一括設定
   const [bulkUrl, setBulkUrl] = useState('')
   const [bulkSelected, setBulkSelected] = useState<Set<string>>(new Set())
-  const [bulkMode, setBulkMode] = useState<'all' | 'select'>('all')
 
-  const showMsg = (m: string) => { setMsg(m); setTimeout(() => setMsg(''), 3000) }
+  // コピー済みUUID
+  const [copiedUuid, setCopiedUuid] = useState<string | null>(null)
+
+  const showMsg = (m: string) => { setMsg(m); setTimeout(() => setMsg(''), 4000) }
 
   const loadConfig = useCallback(async () => {
+    setLoading(true)
     const r = await fetch('/api/redirect')
     const d = await r.json()
     setConfig(d)
+    setLoading(false)
   }, [])
 
-  const handleAuth = () => {
-    if (password === 'kataomoi2025') { setAuthed(true); loadConfig() }
-    else setAuthError('パスワードが違います')
+  const handleAuth = async () => {
+    if (password === 'kataomoi2025') {
+      setAuthed(true)
+      loadConfig()
+    } else {
+      setAuthError('パスワードが違います')
+    }
   }
 
   const post = async (body: object) => {
@@ -60,75 +77,107 @@ export default function AdminPanel({ onClose }: AdminPanelProps) {
     })
     const d = await r.json()
     setLoading(false)
-    if (d.ok) { setConfig(d); return true }
+    if (d.ok !== false && !d.error) return d
     showMsg('× ' + (d.error || '失敗'))
-    return false
+    return null
   }
 
-  const handleSetDefault = async () => {
-    if (!editUrl) return
-    const ok = await post({ action: 'setDefault', url: editUrl })
-    if (ok) { showMsg('✓ デフォルトURLを更新しました'); setEditCard(null); setEditUrl('') }
-  }
-
-  const handleSetCard = async (cardId: string) => {
-    const ok = await post({ action: 'setCard', cardId, url: editUrl })
-    if (ok) { showMsg(`✓ カード${cardId}を更新しました`); setEditCard(null); setEditUrl('') }
-  }
-
-  const handleBulk = async () => {
-    if (!bulkUrl) return
-    if (bulkMode === 'all') {
-      const ok = await post({ action: 'setAll', url: bulkUrl })
-      if (ok) showMsg('✓ 全カードを一括設定しました')
-    } else {
-      if (bulkSelected.size === 0) { showMsg('× カードを選択してください'); return }
-      const ok = await post({ action: 'setAll', url: bulkUrl, cardIds: Array.from(bulkSelected) })
-      if (ok) showMsg(`✓ ${bulkSelected.size}枚のカードを設定しました`)
+  // 新規カード発行
+  const handleCreate = async () => {
+    if (!newUrl) { showMsg('× URLを入力してください'); return }
+    const d = await post({ action: 'create', label: newLabel || undefined, url: newUrl })
+    if (d) {
+      showMsg(`✓ カード「${d.label}」を発行しました`)
+      setNewLabel(''); setNewUrl('')
+      loadConfig()
     }
-    setBulkUrl(''); setBulkSelected(new Set())
   }
 
-  const toggleSelect = (id: string) => {
+  // カード更新
+  const handleUpdate = async (uuid: string) => {
+    const d = await post({ action: 'update', uuid, label: editLabel, url: editUrl })
+    if (d) {
+      showMsg('✓ 更新しました')
+      setEditUuid(null)
+      loadConfig()
+    }
+  }
+
+  // カード削除
+  const handleDelete = async (uuid: string, label: string) => {
+    if (!confirm(`「${label}」を削除しますか？`)) return
+    const d = await post({ action: 'delete', uuid })
+    if (d) {
+      showMsg('✓ 削除しました')
+      loadConfig()
+    }
+  }
+
+  // 一括更新
+  const handleBulk = async () => {
+    if (!bulkUrl) { showMsg('× URLを入力してください'); return }
+    if (bulkSelected.size === 0) { showMsg('× カードを選択してください'); return }
+    const d = await post({ action: 'bulkUpdate', uuids: Array.from(bulkSelected), url: bulkUrl })
+    if (d) {
+      showMsg(`✓ ${bulkSelected.size}枚を更新しました`)
+      setBulkUrl(''); setBulkSelected(new Set())
+      loadConfig()
+    }
+  }
+
+  // NFCに書くURLをコピー
+  const copyNfcUrl = async (uuid: string) => {
+    const nfcUrl = `${window.location.origin}/?uuid=${uuid}`
+    await navigator.clipboard.writeText(nfcUrl)
+    setCopiedUuid(uuid)
+    setTimeout(() => setCopiedUuid(null), 2000)
+  }
+
+  const toggleSelect = (uuid: string) => {
     const s = new Set(bulkSelected)
-    s.has(id) ? s.delete(id) : s.add(id)
+    s.has(uuid) ? s.delete(uuid) : s.add(uuid)
     setBulkSelected(s)
   }
 
-  const getCardUrl = (id: string) => config?.cards[id] || config?.default || ''
+  const cards = config ? Object.values(config.cards).sort((a, b) =>
+    new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+  ) : []
 
   const inputStyle: React.CSSProperties = {
     width: '100%', padding: '8px 10px', borderRadius: '6px',
     border: '1px solid #d0d8e8', fontSize: '13px',
     boxSizing: 'border-box', outline: 'none',
   }
-  const btnStyle = (primary = true): React.CSSProperties => ({
+  const btnPrimary: React.CSSProperties = {
     padding: '9px 16px', borderRadius: '6px', border: 'none', cursor: 'pointer',
-    fontSize: '13px', fontWeight: '600',
-    background: primary ? K.blue : '#f0f4f8',
-    color: primary ? K.white : '#333',
-  })
+    fontSize: '13px', fontWeight: '600', background: K.blue, color: K.white,
+  }
+  const btnSecondary: React.CSSProperties = {
+    padding: '9px 16px', borderRadius: '6px', border: '1px solid #d0d8e8',
+    cursor: 'pointer', fontSize: '13px', fontWeight: '500',
+    background: '#f8faff', color: '#333',
+  }
 
   return (
     <div style={{
       position: 'fixed', inset: 0, zIndex: 100,
-      background: 'rgba(0,10,30,0.7)',
+      background: 'rgba(0,10,30,0.75)',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       padding: '16px',
     }} onClick={e => e.target === e.currentTarget && onClose()}>
       <div style={{
         background: K.white, borderRadius: '16px', padding: '24px',
-        width: '100%', maxWidth: '480px',
-        maxHeight: '85vh', overflowY: 'auto',
-        boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+        width: '100%', maxWidth: '520px',
+        maxHeight: '88vh', overflowY: 'auto',
+        boxShadow: '0 24px 64px rgba(0,0,0,0.35)',
       }}>
         {/* ヘッダー */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
           <div>
-            <h2 style={{ fontSize: '16px', fontWeight: '700', color: K.navy, margin: 0 }}>管理画面</h2>
-            <p style={{ fontSize: '11px', color: '#888', marginTop: '2px' }}>リダイレクトURL設定</p>
+            <h2 style={{ fontSize: '16px', fontWeight: '700', color: K.navy, margin: 0 }}>NFC カード管理</h2>
+            <p style={{ fontSize: '11px', color: '#888', marginTop: '2px' }}>カードごとにリダイレクトURLを設定</p>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: '#888', padding: '4px 8px' }}>×</button>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: '22px', cursor: 'pointer', color: '#aaa', lineHeight: 1 }}>×</button>
         </div>
 
         {/* 認証 */}
@@ -137,102 +186,137 @@ export default function AdminPanel({ onClose }: AdminPanelProps) {
             <input
               type="password" value={password} onChange={e => setPassword(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleAuth()}
-              placeholder="管理者パスワード"
-              style={{ ...inputStyle, marginBottom: '10px' }}
-              autoFocus
+              placeholder="管理者パスワード" style={{ ...inputStyle, marginBottom: '10px' }} autoFocus
             />
             {authError && <p style={{ color: '#e44', fontSize: '12px', marginBottom: '8px' }}>{authError}</p>}
-            <button onClick={handleAuth} style={{ ...btnStyle(), width: '100%' }}>ログイン</button>
+            <button onClick={handleAuth} style={{ ...btnPrimary, width: '100%' }}>ログイン</button>
           </div>
         ) : (
           <div>
+            {/* メッセージ */}
             {msg && (
-              <div style={{ padding: '10px 14px', borderRadius: '8px', marginBottom: '16px', fontSize: '13px', background: msg.startsWith('✓') ? '#e8f8f0' : '#fff0f0', color: msg.startsWith('✓') ? '#2a8' : '#e44' }}>
-                {msg}
-              </div>
+              <div style={{
+                padding: '10px 14px', borderRadius: '8px', marginBottom: '16px', fontSize: '13px',
+                background: msg.startsWith('✓') ? '#e8f8f0' : '#fff0f0',
+                color: msg.startsWith('✓') ? '#1a8a50' : '#cc2222',
+              }}>{msg}</div>
             )}
 
-            {/* デフォルトURL */}
-            <section style={{ marginBottom: '20px', padding: '14px', background: '#f8faff', borderRadius: '10px', border: '1px solid #e0e8f4' }}>
-              <h3 style={{ fontSize: '13px', fontWeight: '700', color: K.navy, marginBottom: '10px' }}>デフォルトURL（全カード共通）</h3>
-              <p style={{ fontSize: '11px', color: '#888', marginBottom: '8px', wordBreak: 'break-all' }}>現在: {config?.default}</p>
-              {editCard === 'default' ? (
-                <>
-                  <input value={editUrl} onChange={e => setEditUrl(e.target.value)} placeholder="https://..." style={{ ...inputStyle, marginBottom: '8px' }} />
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <button onClick={handleSetDefault} style={btnStyle()} disabled={loading}>保存</button>
-                    <button onClick={() => { setEditCard(null); setEditUrl('') }} style={btnStyle(false)}>キャンセル</button>
-                  </div>
-                </>
-              ) : (
-                <button onClick={() => { setEditCard('default'); setEditUrl(config?.default || '') }} style={btnStyle(false)}>変更</button>
-              )}
-            </section>
-
-            {/* 一括設定 */}
-            <section style={{ marginBottom: '20px', padding: '14px', background: '#f8faff', borderRadius: '10px', border: '1px solid #e0e8f4' }}>
-              <h3 style={{ fontSize: '13px', fontWeight: '700', color: K.navy, marginBottom: '10px' }}>一括設定</h3>
-              <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
-                <button onClick={() => setBulkMode('all')} style={{ ...btnStyle(bulkMode === 'all'), flex: 1, padding: '7px' }}>全カード</button>
-                <button onClick={() => setBulkMode('select')} style={{ ...btnStyle(bulkMode === 'select'), flex: 1, padding: '7px' }}>複数選択</button>
-              </div>
-
-              {bulkMode === 'select' && (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '6px', marginBottom: '10px' }}>
-                  {CARD_IDS.map(id => (
-                    <button key={id} onClick={() => toggleSelect(id)} style={{
-                      padding: '6px 4px', borderRadius: '6px', border: '2px solid',
-                      borderColor: bulkSelected.has(id) ? K.blue : '#d0d8e8',
-                      background: bulkSelected.has(id) ? '#e8f0ff' : '#fff',
-                      fontSize: '12px', fontWeight: bulkSelected.has(id) ? '700' : '400',
-                      color: bulkSelected.has(id) ? K.blue : '#666',
-                      cursor: 'pointer',
-                    }}>
-                      {id}
-                      {config?.cards[id] ? <span style={{ display: 'block', fontSize: '8px', color: '#2a8' }}>●</span> : null}
-                    </button>
-                  ))}
-                  <button onClick={() => setBulkSelected(new Set(CARD_IDS))} style={{ ...btnStyle(false), padding: '6px 4px', fontSize: '11px', gridColumn: 'span 2' }}>全選択</button>
-                  <button onClick={() => setBulkSelected(new Set())} style={{ ...btnStyle(false), padding: '6px 4px', fontSize: '11px', gridColumn: 'span 3' }}>選択解除</button>
-                </div>
-              )}
-
-              <input value={bulkUrl} onChange={e => setBulkUrl(e.target.value)} placeholder="https://..." style={{ ...inputStyle, marginBottom: '8px' }} />
-              <button onClick={handleBulk} style={{ ...btnStyle(), width: '100%' }} disabled={loading}>
-                {bulkMode === 'all' ? '全カードに設定' : `選択した${bulkSelected.size}枚に設定`}
+            {/* 新規カード発行 */}
+            <section style={{ marginBottom: '20px', padding: '16px', background: '#f0f6ff', borderRadius: '12px', border: '1px solid #ccd8f0' }}>
+              <h3 style={{ fontSize: '13px', fontWeight: '700', color: K.navy, marginBottom: '12px' }}>
+                + 新規カード発行
+              </h3>
+              <input value={newLabel} onChange={e => setNewLabel(e.target.value)}
+                placeholder="ラベル（例：春キャンペーンA）" style={{ ...inputStyle, marginBottom: '8px' }} />
+              <input value={newUrl} onChange={e => setNewUrl(e.target.value)}
+                placeholder="リダイレクト先URL（https://...）" style={{ ...inputStyle, marginBottom: '10px' }} />
+              <button onClick={handleCreate} style={{ ...btnPrimary, width: '100%' }} disabled={loading}>
+                {loading ? '処理中...' : 'UUID発行 & 保存'}
               </button>
             </section>
 
-            {/* 個別設定 */}
-            <section style={{ padding: '14px', background: '#f8faff', borderRadius: '10px', border: '1px solid #e0e8f4' }}>
-              <h3 style={{ fontSize: '13px', fontWeight: '700', color: K.navy, marginBottom: '10px' }}>カード個別設定</h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '300px', overflowY: 'auto' }}>
-                {CARD_IDS.map(id => (
-                  <div key={id} style={{ padding: '10px 12px', background: '#fff', borderRadius: '8px', border: '1px solid #e4eaf4' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div>
-                        <span style={{ fontSize: '13px', fontWeight: '700', color: K.navy }}>カード #{id}</span>
-                        {config?.cards[id] && <span style={{ fontSize: '10px', color: '#2a8', marginLeft: '6px' }}>カスタム設定済</span>}
-                        <p style={{ fontSize: '10px', color: '#888', margin: '2px 0 0', wordBreak: 'break-all', maxWidth: '280px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {getCardUrl(id)}
-                        </p>
-                      </div>
-                      <button onClick={() => { setEditCard(id); setEditUrl(config?.cards[id] || config?.default || '') }} style={{ ...btnStyle(false), padding: '5px 10px', fontSize: '11px', flexShrink: 0 }}>
-                        変更
-                      </button>
-                    </div>
-                    {editCard === id && (
-                      <div style={{ marginTop: '8px' }}>
-                        <input value={editUrl} onChange={e => setEditUrl(e.target.value)} placeholder="https://..." style={{ ...inputStyle, marginBottom: '6px' }} autoFocus />
-                        <div style={{ display: 'flex', gap: '6px' }}>
-                          <button onClick={() => handleSetCard(id)} style={{ ...btnStyle(), flex: 1 }} disabled={loading}>保存</button>
-                          <button onClick={() => { setEditCard(null); setEditUrl('') }} style={{ ...btnStyle(false), flex: 1 }}>キャンセル</button>
+            {/* 一括更新 */}
+            {cards.length > 0 && (
+              <section style={{ marginBottom: '20px', padding: '16px', background: '#f8faff', borderRadius: '12px', border: '1px solid #e0e8f4' }}>
+                <h3 style={{ fontSize: '13px', fontWeight: '700', color: K.navy, marginBottom: '10px' }}>複数カード一括URL変更</h3>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '10px' }}>
+                  {cards.map(c => (
+                    <button key={c.uuid} onClick={() => toggleSelect(c.uuid)} style={{
+                      padding: '4px 10px', borderRadius: '20px', fontSize: '12px', cursor: 'pointer',
+                      border: '1.5px solid',
+                      borderColor: bulkSelected.has(c.uuid) ? K.blue : '#d0d8e8',
+                      background: bulkSelected.has(c.uuid) ? '#e8f0ff' : '#fff',
+                      color: bulkSelected.has(c.uuid) ? K.blue : '#555',
+                      fontWeight: bulkSelected.has(c.uuid) ? '700' : '400',
+                    }}>{c.label}</button>
+                  ))}
+                  <button onClick={() => setBulkSelected(new Set(cards.map(c => c.uuid)))}
+                    style={{ ...btnSecondary, padding: '4px 10px', fontSize: '11px' }}>全選択</button>
+                  <button onClick={() => setBulkSelected(new Set())}
+                    style={{ ...btnSecondary, padding: '4px 10px', fontSize: '11px' }}>解除</button>
+                </div>
+                <input value={bulkUrl} onChange={e => setBulkUrl(e.target.value)}
+                  placeholder="新しいURL（https://...）" style={{ ...inputStyle, marginBottom: '8px' }} />
+                <button onClick={handleBulk} style={{ ...btnPrimary, width: '100%' }} disabled={loading || bulkSelected.size === 0}>
+                  {bulkSelected.size > 0 ? `選択した${bulkSelected.size}枚を更新` : 'カードを選択してください'}
+                </button>
+              </section>
+            )}
+
+            {/* カード一覧 */}
+            <section>
+              <h3 style={{ fontSize: '13px', fontWeight: '700', color: K.navy, marginBottom: '10px' }}>
+                発行済みカード {cards.length > 0 && <span style={{ color: '#888', fontWeight: '400' }}>（{cards.length}枚）</span>}
+              </h3>
+              {cards.length === 0 ? (
+                <p style={{ color: '#aaa', fontSize: '13px', textAlign: 'center', padding: '20px' }}>
+                  まだカードがありません。上から発行してください。
+                </p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {cards.map((card, idx) => (
+                    <div key={card.uuid} style={{
+                      padding: '12px 14px', background: '#fff',
+                      borderRadius: '10px', border: '1px solid #e4eaf4',
+                    }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <p style={{ fontSize: '13px', fontWeight: '700', color: K.navy, margin: '0 0 2px' }}>
+                            #{idx + 1} {card.label}
+                          </p>
+                          <p style={{ fontSize: '11px', color: '#888', margin: '0 0 6px',
+                            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {card.url}
+                          </p>
+                          {/* NFCに書くURL */}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <code style={{
+                              fontSize: '9px', color: '#666', background: '#f0f4f8',
+                              padding: '3px 6px', borderRadius: '4px',
+                              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                              maxWidth: '200px', display: 'inline-block',
+                            }}>
+                              /?uuid={card.uuid.slice(0, 8)}...
+                            </code>
+                            <button onClick={() => copyNfcUrl(card.uuid)} style={{
+                              padding: '3px 8px', fontSize: '10px', borderRadius: '4px',
+                              border: '1px solid #ccd', background: copiedUuid === card.uuid ? '#e8f8f0' : '#fff',
+                              color: copiedUuid === card.uuid ? '#1a8a50' : '#555',
+                              cursor: 'pointer', flexShrink: 0,
+                            }}>
+                              {copiedUuid === card.uuid ? '✓ コピー済' : 'NFCにコピー'}
+                            </button>
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', gap: '6px', flexShrink: 0 }}>
+                          <button onClick={() => { setEditUuid(card.uuid); setEditLabel(card.label); setEditUrl(card.url) }}
+                            style={{ ...btnSecondary, padding: '5px 10px', fontSize: '11px' }}>編集</button>
+                          <button onClick={() => handleDelete(card.uuid, card.label)}
+                            style={{ padding: '5px 10px', fontSize: '11px', borderRadius: '6px',
+                              border: '1px solid #ffcccc', background: '#fff8f8', color: '#cc3333', cursor: 'pointer' }}>
+                            削除
+                          </button>
                         </div>
                       </div>
-                    )}
-                  </div>
-                ))}
-              </div>
+
+                      {/* 編集フォーム */}
+                      {editUuid === card.uuid && (
+                        <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid #eef' }}>
+                          <input value={editLabel} onChange={e => setEditLabel(e.target.value)}
+                            placeholder="ラベル" style={{ ...inputStyle, marginBottom: '6px' }} autoFocus />
+                          <input value={editUrl} onChange={e => setEditUrl(e.target.value)}
+                            placeholder="URL（https://...）" style={{ ...inputStyle, marginBottom: '8px' }} />
+                          <div style={{ display: 'flex', gap: '8px' }}>
+                            <button onClick={() => handleUpdate(card.uuid)} style={{ ...btnPrimary, flex: 1 }} disabled={loading}>保存</button>
+                            <button onClick={() => setEditUuid(null)} style={{ ...btnSecondary, flex: 1 }}>キャンセル</button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
             </section>
           </div>
         )}
