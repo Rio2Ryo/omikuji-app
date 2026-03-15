@@ -1,6 +1,8 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
+import AdminPanel from './AdminPanel'
 
 // KATAOMOI ブランドカラー
 const K = {
@@ -398,35 +400,42 @@ export default function OmikujiApp() {
   const [shaking, setShaking] = useState(true)
   const [redirectUrl, setRedirectUrl] = useState('https://kataomoi.org')
   const [showAdmin, setShowAdmin] = useState(false)
-  const [adminInput, setAdminInput] = useState('')
-  const [adminPass, setAdminPass] = useState('')
-  const [adminMsg, setAdminMsg] = useState('')
   const [countdown, setCountdown] = useState<number | null>(null)
+  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const [tilting, setTilting] = useState(false)
 
   const isDaikichi = fortune.id === 'daikichi'
   const isKyo = fortune.id === 'kyo'
 
-  // リダイレクトURL取得
+  // URLパラメータからcardIdを取得してリダイレクトURL取得
   useEffect(() => {
-    fetch('/api/redirect').then(r => r.json()).then(d => setRedirectUrl(d.url)).catch(() => {})
+    const params = new URLSearchParams(window.location.search)
+    const cardId = params.get('cardId')
+    const url = cardId ? `/api/redirect?cardId=${encodeURIComponent(cardId)}` : '/api/redirect'
+    fetch(url).then(r => r.json()).then(d => setRedirectUrl(d.url || d.default || 'https://kataomoi.org')).catch(() => {})
   }, [])
 
-  // 結果表示後3秒でリダイレクト
+  // 結果表示後3秒でリダイレクト（管理画面が開いている間は停止）
   useEffect(() => {
     if (phase !== 'result') return
+    if (showAdmin) {
+      // 管理中はカウント停止
+      if (countdownRef.current) clearInterval(countdownRef.current)
+      setCountdown(null)
+      return
+    }
     let c = 3
     setCountdown(c)
-    const iv = setInterval(() => {
+    countdownRef.current = setInterval(() => {
       c--
       setCountdown(c)
       if (c <= 0) {
-        clearInterval(iv)
+        if (countdownRef.current) clearInterval(countdownRef.current)
         window.location.href = redirectUrl
       }
     }, 1000)
-    return () => clearInterval(iv)
-  }, [phase, redirectUrl])
+    return () => { if (countdownRef.current) clearInterval(countdownRef.current) }
+  }, [phase, redirectUrl, showAdmin])
 
   useEffect(() => {
     if (phase === 'shaking') {
@@ -541,6 +550,12 @@ export default function OmikujiApp() {
                   opacity: 0.5, marginTop: '12px', borderRadius: '2px',
                 }} />
               </div>
+
+              {/* シャカシャカ中の管理ボタン */}
+              <button
+                onClick={() => setShowAdmin(true)}
+                style={{ marginTop: '16px', padding: '6px 16px', fontSize: '11px', background: 'transparent', color: 'rgba(100,130,180,0.5)', border: '1px solid rgba(100,130,180,0.2)', borderRadius: '6px', cursor: 'pointer', letterSpacing: '0.1em' }}
+              >⚙ 管理</button>
             </div>
           )}
 
@@ -660,44 +675,16 @@ export default function OmikujiApp() {
 
               {/* 管理ボタン */}
               <button
-                onClick={() => setShowAdmin(!showAdmin)}
+                onClick={() => setShowAdmin(true)}
                 style={{ display: 'block', width: '100%', marginTop: '8px', padding: '8px', fontSize: '11px', background: 'transparent', color: 'rgba(100,130,180,0.4)', border: '1px solid transparent', borderRadius: '6px', cursor: 'pointer', letterSpacing: '0.1em' }}
               >⚙ 管理</button>
-
-              {showAdmin && (
-                <div style={{ marginTop: '8px', background: isKyo ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)', borderRadius: '10px', padding: '14px' }}>
-                  <p style={{ fontSize: '11px', marginBottom: '8px', color: isKyo ? 'rgba(170,185,205,0.7)' : '#666', letterSpacing: '0.05em' }}>リダイレクト先URL</p>
-                  <input
-                    value={adminInput}
-                    onChange={e => setAdminInput(e.target.value)}
-                    placeholder="https://example.com"
-                    style={{ width: '100%', padding: '8px 10px', borderRadius: '6px', border: '1px solid #ccd', fontSize: '13px', marginBottom: '6px', boxSizing: 'border-box' }}
-                  />
-                  <input
-                    type="password"
-                    value={adminPass}
-                    onChange={e => setAdminPass(e.target.value)}
-                    placeholder="パスワード"
-                    style={{ width: '100%', padding: '8px 10px', borderRadius: '6px', border: '1px solid #ccd', fontSize: '13px', marginBottom: '8px', boxSizing: 'border-box' }}
-                  />
-                  <button
-                    onClick={async () => {
-                      const r = await fetch('/api/redirect', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url: adminInput, password: adminPass }) })
-                      const d = await r.json()
-                      if (d.ok) { setRedirectUrl(d.url); setAdminMsg('✓ 更新しました'); setAdminInput(''); setAdminPass('') }
-                      else setAdminMsg('× ' + (d.error || '失敗'))
-                      setTimeout(() => setAdminMsg(''), 3000)
-                    }}
-                    style={{ width: '100%', padding: '9px', background: '#1e5a9f', color: '#fff', border: 'none', borderRadius: '6px', fontSize: '13px', cursor: 'pointer', fontWeight: '600' }}
-                  >保存</button>
-                  {adminMsg && <p style={{ marginTop: '6px', fontSize: '12px', textAlign: 'center', color: adminMsg.startsWith('✓') ? '#2a8' : '#e44' }}>{adminMsg}</p>}
-                  <p style={{ marginTop: '8px', fontSize: '10px', color: '#999', textAlign: 'center' }}>現在: {redirectUrl}</p>
-                </div>
-              )}
             </div>
           )}
         </main>
       </div>
+
+      {/* 管理パネル（モーダル） */}
+      {showAdmin && <AdminPanel onClose={() => setShowAdmin(false)} />}
     </>
   )
 }
