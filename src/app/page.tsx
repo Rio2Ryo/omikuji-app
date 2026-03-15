@@ -2,7 +2,11 @@
 
 import { useState, useEffect, useCallback, useRef, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
+import dynamic from 'next/dynamic'
 import AdminPanel from './AdminPanel'
+
+// Three.jsはSSRなしで動的ロード
+const OmikujiScene3D = dynamic(() => import('./OmikujiScene3D'), { ssr: false })
 
 // KATAOMOI ブランドカラー
 const K = {
@@ -492,14 +496,23 @@ export default function OmikujiApp() {
 
   useEffect(() => {
     if (phase === 'stick') {
+      // onTiltDoneコールバックで遷移するため、フォールバック用のタイマーのみ
       const t = setTimeout(() => {
         setTilting(false)
         setPhase('result')
         setTimeout(() => setShowEffects(true), 500)
-      }, 2500)
+      }, 3500)
       return () => clearTimeout(t)
     }
   }, [phase])
+
+  const handleTiltDone = useCallback(() => {
+    setTimeout(() => {
+      setTilting(false)
+      setPhase('result')
+      setTimeout(() => setShowEffects(true), 500)
+    }, 800)
+  }, [])
 
   const handleReset = useCallback(() => {
     setShowEffects(false)
@@ -550,51 +563,55 @@ export default function OmikujiApp() {
 
           {/* シャカシャカ & 棒が出るシーン */}
           {(phase === 'shaking' || phase === 'stick') && (
-            <div style={{ textAlign: 'center', animation: 'fadeInUp 0.5s ease forwards' }}>
-              {/* 神社の雰囲気パネル */}
+            <div style={{ textAlign: 'center', animation: 'fadeInUp 0.5s ease forwards', width: '100%' }}>
+              {/* 3D シーンコンテナ */}
               <div style={{
-                width: 'min(320px, 90vw)',
+                width: 'min(360px, 94vw)',
+                height: 'min(480px, 62vw, 68vh)',
                 margin: '0 auto',
-                background: 'linear-gradient(180deg, #fdf8f0 0%, #f5ead8 100%)',
-                borderRadius: '20px',
-                padding: '10px 20px 30px',
-                boxShadow: `0 12px 48px rgba(30,90,159,0.12), 0 2px 8px rgba(0,0,0,0.06)`,
-                border: '1px solid rgba(200,160,60,0.25)',
                 position: 'relative',
+                borderRadius: '24px',
                 overflow: 'hidden',
+                background: 'linear-gradient(160deg, #0a1428 0%, #0f1f3d 40%, #1a3060 100%)',
+                boxShadow: '0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(132,172,252,0.12)',
               }}>
-                {/* 装飾ライン上 */}
+                {/* 背景：光の放射 */}
                 <div style={{
-                  height: '3px',
-                  background: 'repeating-linear-gradient(90deg, #d4a020 0px, #d4a020 12px, transparent 12px, transparent 20px)',
-                  opacity: 0.5, marginBottom: '8px', borderRadius: '2px',
+                  position: 'absolute', inset: 0, zIndex: 0,
+                  background: 'radial-gradient(ellipse 70% 60% at 50% 60%, rgba(30,90,160,0.35) 0%, transparent 70%)',
+                  pointerEvents: 'none',
                 }} />
 
-                <OmikujiBox shaking={shaking} tilting={tilting} stickNumber={stickNumber} />
+                {/* Three.js シーン */}
+                <OmikujiScene3D
+                  shaking={shaking}
+                  tilting={tilting}
+                  stickNumber={stickNumber}
+                  onTiltDone={handleTiltDone}
+                />
 
+                {/* オーバーレイテキスト */}
                 <div style={{
-                  marginTop: '8px',
-                  fontSize: phase === 'shaking' ? '14px' : '20px',
-                  fontWeight: phase === 'shaking' ? '400' : '700',
-                  color: phase === 'shaking' ? '#9a7040' : '#3a1800',
-                  letterSpacing: '0.3em',
-                  transition: 'all 0.3s',
+                  position: 'absolute', bottom: '20px', left: 0, right: 0,
+                  textAlign: 'center', zIndex: 10, pointerEvents: 'none',
                 }}>
-                  {phase === 'shaking' ? 'シャカシャカ…' : `第 ${stickNumber} 番`}
+                  <p style={{
+                    fontSize: phase === 'shaking' ? '13px' : '18px',
+                    fontWeight: phase === 'shaking' ? '400' : '700',
+                    color: phase === 'shaking' ? 'rgba(220,200,140,0.8)' : 'rgba(240,220,120,0.95)',
+                    letterSpacing: '0.35em',
+                    textShadow: '0 1px 8px rgba(0,0,0,0.8)',
+                    transition: 'all 0.4s',
+                  }}>
+                    {phase === 'shaking' ? 'シャカシャカ…' : `第 ${stickNumber} 番`}
+                  </p>
                 </div>
-
-                {/* 装飾ライン下 */}
-                <div style={{
-                  height: '3px',
-                  background: 'repeating-linear-gradient(90deg, #d4a020 0px, #d4a020 12px, transparent 12px, transparent 20px)',
-                  opacity: 0.5, marginTop: '12px', borderRadius: '2px',
-                }} />
               </div>
 
-              {/* シャカシャカ中の管理ボタン */}
+              {/* 管理ボタン */}
               <button
                 onClick={() => setShowAdmin(true)}
-                style={{ marginTop: '16px', padding: '6px 16px', fontSize: '11px', background: 'transparent', color: 'rgba(100,130,180,0.5)', border: '1px solid rgba(100,130,180,0.2)', borderRadius: '6px', cursor: 'pointer', letterSpacing: '0.1em' }}
+                style={{ marginTop: '14px', padding: '6px 16px', fontSize: '11px', background: 'transparent', color: 'rgba(100,130,180,0.5)', border: '1px solid rgba(100,130,180,0.2)', borderRadius: '6px', cursor: 'pointer', letterSpacing: '0.1em' }}
               >⚙ 管理</button>
             </div>
           )}
