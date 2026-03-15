@@ -435,6 +435,141 @@ function Logo() {
   )
 }
 
+// ── カード1枚専用 管理パネル ─────────────────────────
+function CardAdminPanel({ uuid, onClose }: { uuid: string; onClose: () => void }) {
+  const cardUrl = typeof window !== 'undefined'
+    ? `${window.location.origin}/?uuid=${uuid}`
+    : `https://omikuji-app-ten.vercel.app/?uuid=${uuid}`
+
+  const [redirectUrl, setRedirectUrl] = useState('')
+  const [inputUrl, setInputUrl] = useState('')
+  const [label, setLabel] = useState('')
+  const [saved, setSaved] = useState(false)
+  const [copied, setCopied] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [msg, setMsg] = useState('')
+
+  useEffect(() => {
+    fetch(`/api/redirect?uuid=${encodeURIComponent(uuid)}`)
+      .then(r => r.json())
+      .then(d => {
+        setRedirectUrl(d.url || '')
+        setInputUrl(d.url || '')
+        setLabel(d.label || '')
+      })
+      .catch(() => {})
+  }, [uuid])
+
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(cardUrl)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  const handleSave = async () => {
+    if (!inputUrl) return
+    setLoading(true)
+    try {
+      const r = await fetch('/api/redirect', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'update', uuid, url: inputUrl, label }),
+      })
+      const d = await r.json()
+      if (d.error) { setMsg('× ' + d.error) }
+      else { setRedirectUrl(inputUrl); setSaved(true); setMsg('✓ 保存しました'); setTimeout(() => { setSaved(false); setMsg('') }, 2500) }
+    } catch { setMsg('× 通信エラー') }
+    setLoading(false)
+  }
+
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 100,
+      background: 'rgba(0,10,30,0.7)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      padding: '20px',
+    }} onClick={e => e.target === e.currentTarget && onClose()}>
+      <div style={{
+        background: '#fff', borderRadius: '18px', padding: '24px',
+        width: '100%', maxWidth: '420px',
+        boxShadow: '0 24px 64px rgba(0,0,0,0.3)',
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+          <h2 style={{ fontSize: '15px', fontWeight: '700', color: K.navy, margin: 0 }}>カード管理</h2>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: '22px', cursor: 'pointer', color: '#bbb', lineHeight: 1 }}>×</button>
+        </div>
+
+        {msg && (
+          <div style={{
+            padding: '9px 12px', borderRadius: '8px', marginBottom: '16px', fontSize: '13px',
+            background: msg.startsWith('✓') ? '#e6f9ee' : '#fff0f0',
+            color: msg.startsWith('✓') ? '#1a8a50' : '#cc2222',
+          }}>{msg}</div>
+        )}
+
+        {/* このカードのURL */}
+        <div style={{ marginBottom: '20px' }}>
+          <p style={{ fontSize: '11px', fontWeight: '700', color: '#6680aa', marginBottom: '8px', letterSpacing: '0.05em' }}>
+            このカードのアクセスURL
+          </p>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'stretch' }}>
+            <div style={{
+              flex: 1, padding: '10px 12px',
+              background: '#f0f4fc', borderRadius: '8px',
+              fontSize: '11px', color: '#334', wordBreak: 'break-all',
+              lineHeight: '1.6', cursor: 'pointer',
+            }} onClick={handleCopy}>
+              {cardUrl}
+            </div>
+            <button onClick={handleCopy} style={{
+              flexShrink: 0, padding: '0 14px', borderRadius: '8px',
+              border: '1.5px solid',
+              borderColor: copied ? '#1a8a50' : '#ccd',
+              background: copied ? '#e6f9ee' : '#fff',
+              color: copied ? '#1a8a50' : '#555',
+              cursor: 'pointer', fontSize: '12px', fontWeight: '700',
+            }}>
+              {copied ? '✓' : 'コピー'}
+            </button>
+          </div>
+          <p style={{ fontSize: '10px', color: '#aaa', marginTop: '5px' }}>
+            タップでもコピーできます。NFCカードをなくした場合はこのURLを直接共有してください。
+          </p>
+        </div>
+
+        {/* リダイレクト先変更 */}
+        <div>
+          <p style={{ fontSize: '11px', fontWeight: '700', color: '#6680aa', marginBottom: '8px', letterSpacing: '0.05em' }}>
+            リダイレクト先URL
+          </p>
+          <p style={{ fontSize: '11px', color: '#999', marginBottom: '8px' }}>
+            現在: {redirectUrl || '（読み込み中）'}
+          </p>
+          <input
+            value={inputUrl}
+            onChange={e => setInputUrl(e.target.value)}
+            placeholder="https://..."
+            style={{
+              width: '100%', padding: '10px 12px', borderRadius: '8px',
+              border: '1.5px solid #d0d8e8', fontSize: '13px',
+              boxSizing: 'border-box', outline: 'none', marginBottom: '10px',
+            }}
+          />
+          <button onClick={handleSave} disabled={loading || !inputUrl} style={{
+            width: '100%', padding: '11px',
+            background: K.blue, color: '#fff',
+            border: 'none', borderRadius: '8px',
+            fontSize: '14px', fontWeight: '700', cursor: 'pointer',
+            opacity: loading || !inputUrl ? 0.6 : 1,
+          }}>
+            {loading ? '保存中...' : saved ? '✓ 保存しました' : '保存する'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function OmikujiApp() {
   const [phase, setPhase] = useState<Phase>('shaking')
   const [fortune, setFortune] = useState(() => FORTUNES[Math.floor(Math.random() * FORTUNES.length)])
@@ -443,6 +578,7 @@ export default function OmikujiApp() {
   const [showEffects, setShowEffects] = useState(false)
   const [shaking, setShaking] = useState(true)
   const [redirectUrl, setRedirectUrl] = useState('https://kataomoi.org')
+  const [cardUuid, setCardUuid] = useState<string | null>(null)
   const [showAdmin, setShowAdmin] = useState(false)
   const [countdown, setCountdown] = useState<number | null>(null)
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -456,6 +592,7 @@ export default function OmikujiApp() {
     const params = new URLSearchParams(window.location.search)
     const uuid = params.get('uuid') || params.get('cardId')
     if (uuid) {
+      setCardUuid(uuid)
       fetch(`/api/redirect?uuid=${encodeURIComponent(uuid)}`)
         .then(r => r.json())
         .then(d => { if (d.url) setRedirectUrl(d.url) })
@@ -613,11 +750,13 @@ export default function OmikujiApp() {
                 </div>
               </div>
 
-              {/* 管理ボタン */}
-              <button
-                onClick={() => setShowAdmin(true)}
-                style={{ marginTop: '14px', padding: '6px 16px', fontSize: '11px', background: 'transparent', color: 'rgba(100,130,180,0.5)', border: '1px solid rgba(100,130,180,0.2)', borderRadius: '6px', cursor: 'pointer', letterSpacing: '0.1em' }}
-              >⚙ 管理</button>
+              {/* 管理ボタン（uuid付きアクセス時のみ） */}
+              {cardUuid && (
+                <button
+                  onClick={() => setShowAdmin(true)}
+                  style={{ marginTop: '14px', padding: '6px 16px', fontSize: '11px', background: 'transparent', color: 'rgba(100,130,180,0.5)', border: '1px solid rgba(100,130,180,0.2)', borderRadius: '6px', cursor: 'pointer', letterSpacing: '0.1em' }}
+                >⚙ 管理</button>
+              )}
             </div>
           )}
 
@@ -734,19 +873,39 @@ export default function OmikujiApp() {
                   {countdown}秒後に移動します...
                 </p>
               )}
-
-              {/* 管理ボタン */}
-              <button
-                onClick={() => setShowAdmin(true)}
-                style={{ display: 'block', width: '100%', marginTop: '8px', padding: '8px', fontSize: '11px', background: 'transparent', color: 'rgba(100,130,180,0.4)', border: '1px solid transparent', borderRadius: '6px', cursor: 'pointer', letterSpacing: '0.1em' }}
-              >⚙ 管理</button>
             </div>
           )}
         </main>
+
+        {/* 右下：名刺購入ボタン */}
+        <a
+          href="https://kataomoi.org"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            position: 'fixed', bottom: '20px', right: '16px',
+            padding: '10px 16px',
+            background: K.navy,
+            color: K.white,
+            fontSize: '12px', fontWeight: '700',
+            borderRadius: '24px',
+            textDecoration: 'none',
+            letterSpacing: '0.05em',
+            boxShadow: '0 4px 16px rgba(0,0,0,0.25)',
+            display: 'flex', alignItems: 'center', gap: '6px',
+            zIndex: 30,
+          }}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="2" y="6" width="20" height="14" rx="2"/>
+            <path d="M16 6V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
+          </svg>
+          この名刺を購入する
+        </a>
       </div>
 
-      {/* 管理パネル（モーダル） */}
-      {showAdmin && <AdminPanel onClose={() => setShowAdmin(false)} />}
+      {/* カード管理画面（uuid付きアクセス時のみ表示） */}
+      {showAdmin && cardUuid && <CardAdminPanel uuid={cardUuid} onClose={() => setShowAdmin(false)} />}
     </>
   )
 }
