@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useEffect, useMemo } from 'react'
+import { useRef, useEffect, useMemo, useState } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
 import { Environment, MeshReflectorMaterial } from '@react-three/drei'
 import * as THREE from 'three'
@@ -270,13 +270,38 @@ interface OmikujiScene3DProps {
 }
 
 export default function OmikujiScene3D({ shaking, tilting, stickNumber, onTiltDone }: OmikujiScene3DProps) {
+  const [webglFailed, setWebglFailed] = useState(false)
+
+  // WebGL非対応チェック
+  useEffect(() => {
+    try {
+      const canvas = document.createElement('canvas')
+      const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl')
+      if (!gl) setWebglFailed(true)
+    } catch {
+      setWebglFailed(true)
+    }
+  }, [])
+
+  // フォールバック：CSS SVGアニメーション
+  if (webglFailed) {
+    return (
+      <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <FallbackSVG shaking={shaking} tilting={tilting} stickNumber={stickNumber} />
+      </div>
+    )
+  }
+
   return (
     <div style={{ width: '100%', height: '100%', position: 'absolute', inset: 0 }}>
       <Canvas
         shadows
         camera={{ position: [0, 0.5, 5.5], fov: 38 }}
-        gl={{ antialias: true, alpha: true }}
+        gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
         style={{ background: 'transparent' }}
+        onCreated={({ gl }) => {
+          gl.setClearColor(new THREE.Color(0x000000), 0)
+        }}
       >
         {/* ライティング */}
         <ambientLight intensity={0.5} />
@@ -314,6 +339,88 @@ export default function OmikujiScene3D({ shaking, tilting, stickNumber, onTiltDo
           onTiltDone={onTiltDone}
         />
       </Canvas>
+    </div>
+  )
+}
+
+// ── フォールバック SVGアニメーション（WebGL非対応時）──
+function FallbackSVG({ shaking, tilting, stickNumber }: { shaking: boolean; tilting: boolean; stickNumber: number }) {
+  const peekAnims = ['stickPeek0', 'stickPeek1', 'stickPeek2', 'stickPeek3', 'stickPeek4']
+  const peekDurs  = ['0.30s', '0.22s', '0.38s', '0.26s', '0.34s']
+  const isIdle = !shaking && !tilting
+
+  return (
+    <div style={{
+      position: 'relative', width: '200px', height: '320px',
+      animation: shaking
+        ? 'shakeBox 0.7s ease-in-out infinite'
+        : tilting
+        ? 'tiltBox 1.1s cubic-bezier(0.22,1,0.36,1) forwards'
+        : isIdle
+        ? 'float 3.5s ease-in-out infinite'
+        : 'none',
+      transformOrigin: '50% 100%',
+      transform: 'translateX(0)',
+    }}>
+      {tilting && (
+        <div style={{
+          position: 'absolute', top: '60px', left: '50%', marginLeft: '-5px',
+          width: '12px', height: 0, transformOrigin: 'bottom center',
+          transform: 'rotate(-30deg)',
+          animation: 'stickSlide 2.0s cubic-bezier(0.16,1,0.3,1) 0.5s forwards',
+          zIndex: 10,
+        }}>
+          <svg width="12" height="140" viewBox="0 0 12 140" overflow="visible">
+            <rect x="1" y="0" width="10" height="140" rx="3" fill="url(#sgf)" />
+            <rect x="2" y="0" width="3" height="140" rx="1.5" fill="rgba(255,255,255,0.3)" />
+            <text x="6" y="20" textAnchor="middle" fontSize="7" fill="#3a1800"
+              fontFamily="serif"
+              style={{ animation: 'stickNumFade 2.5s ease forwards', opacity: 0 }}>
+              {stickNumber}
+            </text>
+            <defs>
+              <linearGradient id="sgf" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stopColor="#b89030" />
+                <stop offset="40%" stopColor="#f0e090" />
+                <stop offset="100%" stopColor="#b08020" />
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+      )}
+      <svg width="200" height="320" viewBox="0 0 200 320" fill="none">
+        <defs>
+          <linearGradient id="fwC" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="#a06020" />
+            <stop offset="45%" stopColor="#e8aa50" />
+            <stop offset="100%" stopColor="#9a5818" />
+          </linearGradient>
+          <linearGradient id="fgBand" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#ffe868" />
+            <stop offset="100%" stopColor="#a88010" />
+          </linearGradient>
+          <filter id="fShad"><feDropShadow dx="4" dy="8" stdDeviation="8" floodColor="rgba(0,0,0,0.3)" /></filter>
+        </defs>
+        <ellipse cx="100" cy="308" rx="72" ry="12" fill="rgba(0,0,0,0.15)" />
+        <g filter="url(#fShad)">
+          <path d="M22 36 L56 24 L56 280 L22 292 Z" fill="#3a2008" />
+          <path d="M56 24 L144 24 L144 280 L56 280 Z" fill="url(#fwC)" />
+          <path d="M144 24 L178 36 L178 292 L144 280 Z" fill="#3a2008" />
+        </g>
+        <ellipse cx="100" cy="24" rx="78" ry="18" fill="#c8a040" />
+        <ellipse cx="100" cy="22" rx="14" ry="8" fill="#060300" />
+        <line x1="22" y1="90" x2="178" y2="90" stroke="#fcd840" strokeWidth="3" opacity="0.8" />
+        <rect x="22" y="92" width="156" height="72" fill="url(#fgBand)" />
+        <text x="100" y="138" textAnchor="middle" fontSize="22" fontWeight="bold"
+          fill="#2a1000" fontFamily="'Hiragino Mincho ProN', 'Yu Mincho', serif" letterSpacing="4">御神籤</text>
+        <line x1="22" y1="164" x2="178" y2="164" stroke="#a07010" strokeWidth="3" opacity="0.8" />
+        {shaking && [80, 90, 100, 110, 120].map((x, i) => (
+          <rect key={i} x={x - 3} y={-14} width={i === 2 ? 8 : 6} height={i % 2 === 0 ? 24 : 16}
+            rx="2" fill={i % 2 === 0 ? '#f0dc80' : '#e8c860'} opacity={0.6 + i * 0.06}
+            style={{ animation: `${peekAnims[i]} ${peekDurs[i]} ease-in-out infinite` }} />
+        ))}
+        <ellipse cx="100" cy="284" rx="72" ry="14" fill="#3a1808" />
+      </svg>
     </div>
   )
 }
