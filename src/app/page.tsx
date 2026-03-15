@@ -106,131 +106,148 @@ const CSS_ANIMATIONS = `
   }
 `
 
-// おみくじ筒コンポーネント
+// おみくじ筒コンポーネント（SVGで高品質に）
 function OmikujiBox({ shaking, tilting, stickNumber }: { shaking: boolean; tilting: boolean; stickNumber: number }) {
-  const woodColor = '#c8a870'
-  const woodDark = '#a07840'
-  const goldBand = '#d4a830'
-
   return (
-    <div style={{ position: 'relative', width: '120px', margin: '0 auto' }}>
-      {/* 筒本体（六角形をシンプルに長方形で表現） */}
+    <div style={{ position: 'relative', width: '160px', height: '220px', margin: '0 auto' }}>
       <div style={{
-        width: '80px',
-        margin: '0 auto',
-        position: 'relative',
-        animation: shaking ? 'shakeBox 0.5s ease-in-out infinite' : tilting ? 'tiltBox 0.8s ease-out forwards' : 'none',
-        transformOrigin: 'center bottom',
+        position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)',
+        animation: shaking
+          ? 'shakeBox 0.45s ease-in-out infinite'
+          : tilting
+          ? 'tiltBox 0.9s cubic-bezier(0.22,1,0.36,1) forwards'
+          : 'none',
+        transformOrigin: '50% 90%',
       }}>
-        {/* 筒の上部（蓋） */}
-        <div style={{
-          width: '80px', height: '14px',
-          background: `linear-gradient(135deg, ${woodColor} 0%, ${woodDark} 100%)`,
-          borderRadius: '4px 4px 0 0',
-          border: `1px solid ${woodDark}`,
-          position: 'relative',
-          boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.3)',
-        }}>
-          {/* 穴 */}
-          <div style={{
-            position: 'absolute', top: '50%', left: '50%',
-            transform: 'translate(-50%, -50%)',
-            width: '12px', height: '12px',
-            borderRadius: '50%',
-            background: '#2a1a08',
-            boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.8)',
-          }} />
-        </div>
+        <svg width="100" height="200" viewBox="0 0 100 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+          {/* 影 */}
+          <ellipse cx="50" cy="195" rx="38" ry="6" fill="rgba(0,0,0,0.12)" />
 
-        {/* 筒の胴体 */}
-        <div style={{
-          width: '80px', height: '120px',
-          background: `linear-gradient(135deg, ${woodColor} 0%, #b89050 50%, ${woodDark} 100%)`,
-          border: `1px solid ${woodDark}`,
-          borderTop: 'none',
-          borderRadius: '0 0 4px 4px',
-          position: 'relative',
-          overflow: 'hidden',
-          boxShadow: 'inset 2px 0 6px rgba(255,255,255,0.2), inset -2px 0 6px rgba(0,0,0,0.15)',
-        }}>
-          {/* 木目 */}
-          {[20, 50, 80].map(y => (
-            <div key={y} style={{
-              position: 'absolute', top: `${y}px`, left: 0, right: 0,
-              height: '1px', background: 'rgba(100,60,20,0.2)',
-            }} />
+          {/* 筒の本体（六角形風に側面のグラデで表現） */}
+          {/* 左の暗い面 */}
+          <rect x="8" y="20" width="18" height="160" rx="2"
+            fill="url(#woodLeft)" />
+          {/* 中央の明るい面 */}
+          <rect x="26" y="14" width="48" height="166" rx="2"
+            fill="url(#woodCenter)" />
+          {/* 右の暗い面 */}
+          <rect x="74" y="20" width="18" height="160" rx="2"
+            fill="url(#woodRight)" />
+
+          {/* 底面 */}
+          <ellipse cx="50" cy="180" rx="42" ry="8" fill="#7a5020" />
+          <ellipse cx="50" cy="178" rx="42" ry="8" fill="url(#woodBottom)" />
+
+          {/* 上面（蓋） */}
+          <ellipse cx="50" cy="14" rx="42" ry="10" fill="url(#woodTop)" />
+          {/* 穴 */}
+          <ellipse cx="50" cy="12" rx="8" ry="5" fill="#1a0a00" />
+          <ellipse cx="50" cy="12" rx="6" ry="3.5" fill="#0a0500" />
+
+          {/* 金帯 上 */}
+          <rect x="8" y="48" width="84" height="3" fill="#c89020" opacity="0.6" />
+          <rect x="26" y="48" width="48" height="3" fill="#f0c840" />
+
+          {/* 金帯メイン */}
+          <rect x="8" y="60" width="84" height="36" fill="url(#goldBand)" />
+          <rect x="8" y="60" width="84" height="1" fill="#f8e060" opacity="0.8" />
+          <rect x="8" y="95" width="84" height="1" fill="#8a6010" opacity="0.8" />
+
+          {/* 御神籤テキスト */}
+          <text x="50" y="88" textAnchor="middle" fontSize="13" fontWeight="bold"
+            fill="#3a1a00" fontFamily="'Hiragino Mincho ProN', serif" letterSpacing="1">
+            御神籤
+          </text>
+
+          {/* 金帯 下 */}
+          <rect x="8" y="96" width="84" height="3" fill="#c89020" opacity="0.6" />
+          <rect x="26" y="96" width="48" height="3" fill="#e8b830" />
+
+          {/* 木目ライン */}
+          {[115, 130, 148, 163].map((y, i) => (
+            <line key={i} x1="26" y1={y} x2="74" y2={y}
+              stroke="rgba(100,60,20,0.18)" strokeWidth="1" />
           ))}
 
-          {/* 金帯 */}
-          <div style={{
-            position: 'absolute', top: '25px', left: 0, right: 0,
-            height: '22px',
-            background: `linear-gradient(180deg, ${goldBand}cc 0%, ${goldBand} 50%, ${goldBand}cc 100%)`,
-            borderTop: `1px solid #f0c060`,
-            borderBottom: `1px solid #a07820`,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <span style={{
-              fontSize: '11px', fontWeight: 'bold',
-              color: '#5a3000', letterSpacing: '0.05em',
-              fontFamily: "'Hiragino Mincho ProN', serif",
-              writingMode: 'vertical-rl',
-              lineHeight: 1,
-            }}>御神籤</span>
-          </div>
+          {/* シャカシャカ時の棒 */}
+          {shaking && [42, 47, 52, 57, 62].map((x, i) => (
+            <rect key={i} x={x} y={i % 2 === 0 ? 2 : 5} width="4" height={i % 2 === 0 ? 14 : 10}
+              rx="1" fill="#e8d080" opacity={0.5 + i * 0.1}
+              style={{ animation: `sticksBounce ${0.3 + i * 0.05}s ease-in-out infinite` }}
+            />
+          ))}
 
-          {/* 内部の棒たち（シャカシャカ時に見える） */}
-          {shaking && (
-            <div style={{
-              position: 'absolute', bottom: '0', left: '50%',
-              transform: 'translateX(-50%)',
-              display: 'flex', gap: '3px',
-              animation: 'sticksBounce 0.3s ease-in-out infinite',
-            }}>
-              {[0, 1, 2, 3].map(i => (
-                <div key={i} style={{
-                  width: '5px', height: `${50 + i * 8}px`,
-                  background: '#e8d090',
-                  borderRadius: '2px 2px 0 0',
-                  opacity: 0.6 + i * 0.1,
-                }} />
-              ))}
-            </div>
-          )}
-        </div>
+          <defs>
+            <linearGradient id="woodLeft" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stopColor="#7a5020" />
+              <stop offset="100%" stopColor="#9a6828" />
+            </linearGradient>
+            <linearGradient id="woodCenter" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stopColor="#c8903a" />
+              <stop offset="30%" stopColor="#e0b060" />
+              <stop offset="60%" stopColor="#d4a040" />
+              <stop offset="100%" stopColor="#b07830" />
+            </linearGradient>
+            <linearGradient id="woodRight" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stopColor="#9a6828" />
+              <stop offset="100%" stopColor="#7a5020" />
+            </linearGradient>
+            <linearGradient id="woodTop" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#e8c070" />
+              <stop offset="100%" stopColor="#c09040" />
+            </linearGradient>
+            <linearGradient id="woodBottom" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#a07030" />
+              <stop offset="100%" stopColor="#7a5020" />
+            </linearGradient>
+            <linearGradient id="goldBand" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#f0d060" />
+              <stop offset="30%" stopColor="#e8c040" />
+              <stop offset="70%" stopColor="#d4a820" />
+              <stop offset="100%" stopColor="#c09018" />
+            </linearGradient>
+          </defs>
+        </svg>
+
+        {/* 棒が出てくる */}
+        {tilting && (
+          <div style={{
+            position: 'absolute',
+            top: '-8px',
+            left: '50%',
+            transform: 'translateX(-50%) rotate(38deg)',
+            transformOrigin: 'bottom center',
+            overflow: 'hidden',
+            animation: 'stickSlide 1.4s cubic-bezier(0.22,1,0.36,1) 0.2s forwards',
+            height: 0,
+          }}>
+            <svg width="16" height="130" viewBox="0 0 16 130">
+              {/* 棒の影 */}
+              <rect x="9" y="0" width="4" height="130" rx="2" fill="rgba(0,0,0,0.15)" />
+              {/* 棒本体 */}
+              <rect x="3" y="0" width="10" height="130" rx="3"
+                fill="url(#stickGrad)" />
+              {/* 光沢 */}
+              <rect x="4" y="0" width="3" height="130" rx="1.5"
+                fill="rgba(255,255,255,0.25)" />
+              {/* 番号 */}
+              <text x="8" y="30" textAnchor="middle"
+                fontSize="9" fontWeight="bold" fill="#5a3000"
+                fontFamily="'Hiragino Mincho ProN', serif"
+                style={{ animation: 'stickFadeNum 1.5s ease forwards' }}>
+                {stickNumber}
+              </text>
+              <defs>
+                <linearGradient id="stickGrad" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stopColor="#d4b870" />
+                  <stop offset="40%" stopColor="#f0e0a0" />
+                  <stop offset="100%" stopColor="#c8a860" />
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+        )}
       </div>
-
-      {/* 棒が出てくる（傾けた後） */}
-      {tilting && (
-        <div style={{
-          position: 'absolute',
-          top: '-4px', left: '50%',
-          transform: 'translateX(-50%) rotate(35deg)',
-          transformOrigin: 'bottom center',
-          display: 'flex', flexDirection: 'column', alignItems: 'center',
-          overflow: 'hidden',
-          animation: 'stickSlide 1.2s cubic-bezier(0.22,1,0.36,1) 0.3s forwards',
-          height: 0,
-        }}>
-          <div style={{
-            width: '10px',
-            height: '110px',
-            background: 'linear-gradient(180deg, #f0e0a0 0%, #d4b870 50%, #c0a060 100%)',
-            borderRadius: '3px 3px 1px 1px',
-            boxShadow: '1px 0 3px rgba(0,0,0,0.2)',
-            position: 'relative',
-          }}>
-            <div style={{
-              position: 'absolute', top: '10px', left: '50%',
-              transform: 'translateX(-50%)',
-              fontSize: '9px', fontWeight: 'bold',
-              color: '#5a3000',
-              writingMode: 'vertical-rl',
-              animation: 'stickFadeNum 1.5s ease forwards',
-            }}>{stickNumber}</div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
@@ -290,8 +307,8 @@ function KataomoiLogo() {
 export default function OmikujiApp() {
   const [phase, setPhase] = useState<Phase>('shaking')
   const [currentFortune, setCurrentFortune] = useState(() => FORTUNES[Math.floor(Math.random() * FORTUNES.length)])
-  const [stickNumber] = useState(() => Math.floor(Math.random() * 50) + 1)
-  const [luckyItems] = useState(getLucky)
+  const [stickNumber, setStickNumber] = useState(() => Math.floor(Math.random() * 50) + 1)
+  const [luckyItems, setLuckyItems] = useState(getLucky)
   const [showEffects, setShowEffects] = useState(false)
   const [shaking, setShaking] = useState(true)
   const [tilting, setTilting] = useState(false)
@@ -330,6 +347,8 @@ export default function OmikujiApp() {
     setShaking(false)
     setTilting(false)
     setCurrentFortune(FORTUNES[Math.floor(Math.random() * FORTUNES.length)])
+    setStickNumber(Math.floor(Math.random() * 50) + 1)
+    setLuckyItems(getLucky())
     setPhase('shaking')
   }, [])
 
