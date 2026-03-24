@@ -157,6 +157,17 @@ export default function AdminPanel({ onClose }: AdminPanelProps) {
     }
   }
 
+  const handleBulkDelete = async () => {
+    if (bulkSelected.size === 0) { showMsg('× カードを選択してください'); return }
+    if (!confirm(`${bulkSelected.size}件のカードを削除しますか？この操作は元に戻せません。`)) return
+    const d = await post({ action: 'bulkDelete', uuids: Array.from(bulkSelected) })
+    if (d) {
+      showMsg(`✓ ${d.deleted}件を削除しました`)
+      setBulkSelected(new Set())
+      loadConfig()
+    }
+  }
+
   const copyUrl = async (text: string, uuid: string) => {
     await navigator.clipboard.writeText(text)
     setCopiedUuid(uuid)
@@ -372,9 +383,20 @@ export default function AdminPanel({ onClose }: AdminPanelProps) {
                 </div>
                 <input value={bulkUrl} onChange={e => setBulkUrl(e.target.value)}
                   placeholder="新しいURL（https://...）" style={{ ...inp, marginBottom: '8px' }} />
-                <button onClick={handleBulk} style={{ ...btnP, width: '100%' }} disabled={loading || bulkSelected.size === 0}>
-                  {bulkSelected.size > 0 ? `選択した${bulkSelected.size}枚を更新` : 'カードを選択してください'}
-                </button>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button onClick={handleBulk} style={{ ...btnP, flex: 1 }} disabled={loading || bulkSelected.size === 0}>
+                    {bulkSelected.size > 0 ? `選択した${bulkSelected.size}枚を更新` : 'カードを選択してください'}
+                  </button>
+                  {bulkSelected.size > 0 && (
+                    <button onClick={handleBulkDelete} disabled={loading} style={{
+                      padding: '9px 16px', borderRadius: '8px', border: '1px solid #fcc',
+                      cursor: 'pointer', fontSize: '13px', fontWeight: '600',
+                      background: '#fff8f8', color: '#c44', flexShrink: 0,
+                    }}>
+                      一括削除
+                    </button>
+                  )}
+                </div>
               </section>
             )}
 

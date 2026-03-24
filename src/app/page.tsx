@@ -1193,23 +1193,29 @@ export default function OmikujiApp() {
           {cardUuid && (
             <button
               onClick={() => setShowUserEdit(true)}
+              onMouseEnter={e => { e.currentTarget.style.opacity = '0.65' }}
+              onMouseLeave={e => { e.currentTarget.style.opacity = '0.2' }}
               style={{
-                padding: '7px 14px', fontSize: '11px',
-                background: 'rgba(0,20,10,0.75)', backdropFilter: 'blur(8px)',
-                color: 'rgba(100,220,150,0.85)',
-                border: '1px solid rgba(100,220,150,0.3)',
-                borderRadius: '8px', cursor: 'pointer', letterSpacing: '0.08em',
+                padding: '5px 10px', fontSize: '10px',
+                background: 'rgba(0,20,10,0.4)', backdropFilter: 'blur(4px)',
+                color: 'rgba(100,220,150,0.9)',
+                border: '1px solid rgba(100,220,150,0.2)',
+                borderRadius: '6px', cursor: 'pointer', letterSpacing: '0.08em',
+                opacity: '0.2', transition: 'opacity 0.2s',
               }}
             >✎ リダイレクト先を編集</button>
           )}
           <button
             onClick={() => setShowAdmin(true)}
+            onMouseEnter={e => { e.currentTarget.style.opacity = '0.65' }}
+            onMouseLeave={e => { e.currentTarget.style.opacity = '0.2' }}
             style={{
-              padding: '7px 14px', fontSize: '11px',
-              background: 'rgba(0,10,30,0.75)', backdropFilter: 'blur(8px)',
-              color: 'rgba(100,130,180,0.7)',
-              border: '1px solid rgba(100,130,180,0.25)',
-              borderRadius: '8px', cursor: 'pointer', letterSpacing: '0.1em',
+              padding: '5px 10px', fontSize: '10px',
+              background: 'rgba(0,10,30,0.4)', backdropFilter: 'blur(4px)',
+              color: 'rgba(150,170,210,0.9)',
+              border: '1px solid rgba(100,130,180,0.2)',
+              borderRadius: '6px', cursor: 'pointer', letterSpacing: '0.1em',
+              opacity: '0.2', transition: 'opacity 0.2s',
             }}
           >⚙ 管理</button>
         </div>

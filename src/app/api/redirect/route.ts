@@ -207,6 +207,21 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok, ...config })
   }
 
+  // 一括削除: { action: 'bulkDelete', uuids: string[] }
+  if (body.action === 'bulkDelete') {
+    const uuids: string[] = body.uuids || []
+    let deleted = 0
+    for (const uuid of uuids) {
+      if (config.cards[uuid]) {
+        delete config.cards[uuid]
+        deleted++
+      }
+    }
+    config.updatedAt = new Date().toISOString()
+    const ok = await saveConfig(config)
+    return NextResponse.json({ ok, deleted })
+  }
+
   // グループテーマ設定: { action: 'setGroupTheme', group: string, theme: string }
   if (body.action === 'setGroupTheme') {
     if (!body.group) return NextResponse.json({ error: 'group is required' }, { status: 400 })
