@@ -776,6 +776,18 @@ export default function OmikujiApp() {
   const [showUserEdit, setShowUserEdit] = useState(false)
   const [activeTheme, setActiveTheme] = useState<Theme>(defaultTheme)
   const [countdown, setCountdown] = useState<number | null>(null)
+
+  // ivisionキャラクター散りばめ用のランダム配置（マウント時に一度だけ生成）
+  const ivisionChars = useMemo(() =>
+    Array.from({ length: 10 }, (_, i) => ({
+      src: `/images/ivision/char${String(i + 1).padStart(2, '0')}.png`,
+      top: `${8 + Math.random() * 80}%`,
+      left: `${3 + Math.random() * 88}%`,
+      size: 40 + Math.floor(Math.random() * 21),
+      opacity: 0.3 + Math.random() * 0.2,
+      rotate: -15 + Math.floor(Math.random() * 31),
+    }))
+  , [])
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const countdownDelayRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -920,6 +932,29 @@ export default function OmikujiApp() {
       }}>
         {isResult && showEffects && isDaikichi && <Confetti />}
         {isResult && showEffects && isKyo && <Rain />}
+
+        {/* ivisionキャラクター散りばめ（ivisionテーマのみ） */}
+        {activeTheme.id === 'ivision' && ivisionChars.map((c, i) => (
+          <img
+            key={i}
+            src={c.src}
+            alt=""
+            aria-hidden="true"
+            style={{
+              position: 'absolute',
+              top: c.top,
+              left: c.left,
+              width: `${c.size}px`,
+              height: `${c.size}px`,
+              objectFit: 'contain',
+              opacity: phase === 'result' ? c.opacity : c.opacity * 0.5,
+              transform: `rotate(${c.rotate}deg)`,
+              pointerEvents: 'none',
+              zIndex: 1,
+              transition: 'opacity 0.8s ease',
+            }}
+          />
+        ))}
 
         {/* ヘッダー */}
         <header style={{
