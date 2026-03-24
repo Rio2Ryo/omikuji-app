@@ -853,7 +853,6 @@ export default function OmikujiApp() {
         .then(r => r.json())
         .then(d => { if (d.url) setRedirectUrl(d.url) })
         .catch(() => {})
-      if (params.get('edit') === 'true') setShowUserEdit(true)
     }
     // uuidなし = デフォルトURL（kataomoi.org）のまま
   }, [])
@@ -1034,10 +1033,17 @@ export default function OmikujiApp() {
               />
             </div>
 
+            {/* リダイレクト先編集ボタン（UUID付きアクセス時のみ） */}
+            {cardUuid && (
+              <button
+                onClick={() => setShowUserEdit(true)}
+                style={{ marginTop: '10px', padding: '6px 16px', fontSize: '11px', background: 'transparent', color: 'rgba(100,180,130,0.6)', border: '1px solid rgba(100,180,130,0.25)', borderRadius: '6px', cursor: 'pointer', letterSpacing: '0.08em' }}
+              >✎ リダイレクト先を編集</button>
+            )}
             {/* 管理ボタン */}
             <button
               onClick={() => setShowAdmin(true)}
-              style={{ marginTop: '14px', padding: '6px 16px', fontSize: '11px', background: 'transparent', color: 'rgba(100,130,180,0.5)', border: '1px solid rgba(100,130,180,0.2)', borderRadius: '6px', cursor: 'pointer', letterSpacing: '0.1em' }}
+              style={{ marginTop: '6px', padding: '6px 16px', fontSize: '11px', background: 'transparent', color: 'rgba(100,130,180,0.5)', border: '1px solid rgba(100,130,180,0.2)', borderRadius: '6px', cursor: 'pointer', letterSpacing: '0.1em' }}
             >⚙ 管理</button>
           </div>
 
@@ -1229,10 +1235,17 @@ export default function OmikujiApp() {
                 </p>
               )}
 
+              {/* リダイレクト先編集ボタン（UUID付きアクセス時のみ） */}
+              {cardUuid && (
+                <button
+                  onClick={() => setShowUserEdit(true)}
+                  style={{ display: 'block', width: '100%', marginTop: '6px', padding: '7px', fontSize: '11px', background: 'transparent', color: 'rgba(100,180,130,0.55)', border: '1px solid rgba(100,180,130,0.2)', borderRadius: '6px', cursor: 'pointer', letterSpacing: '0.08em', position: 'relative', zIndex: 2 }}
+                >✎ リダイレクト先を編集</button>
+              )}
               {/* 管理ボタン */}
               <button
                 onClick={() => setShowAdmin(true)}
-                style={{ display: 'block', width: '100%', marginTop: '8px', padding: '8px', fontSize: '11px', background: 'transparent', color: 'rgba(100,130,180,0.35)', border: '1px solid transparent', borderRadius: '6px', cursor: 'pointer', letterSpacing: '0.1em', position: 'relative', zIndex: 2 }}
+                style={{ display: 'block', width: '100%', marginTop: '4px', padding: '8px', fontSize: '11px', background: 'transparent', color: 'rgba(100,130,180,0.35)', border: '1px solid transparent', borderRadius: '6px', cursor: 'pointer', letterSpacing: '0.1em', position: 'relative', zIndex: 2 }}
               >⚙ 管理</button>
             </div>
           )}
