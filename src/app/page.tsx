@@ -830,7 +830,7 @@ export default function OmikujiApp() {
   const videoRef = useRef<HTMLVideoElement>(null)
   const [tilting, setTilting] = useState(false)
   const [history, setHistory] = useState<FortuneRecord[]>([])
-  const [selectedVideo, setSelectedVideo] = useState<string>(() => `/videos/0${Math.floor(Math.random() * 4) + 1}.mp4`)
+  const [selectedVideo] = useState<string>('/videos/05.mp4')
 
   const isDaikichi = fortune.id === 'daikichi'
   const isKyo = fortune.id === 'kyo'
@@ -930,19 +930,16 @@ export default function OmikujiApp() {
   }, [])
 
   const handleReset = useCallback(() => {
-    const newVideo = `/videos/0${Math.floor(Math.random() * 4) + 1}.mp4`
     setShowEffects(false)
     setShaking(false)
     setTilting(false)
     setFortune(FORTUNES[Math.floor(Math.random() * FORTUNES.length)])
     setStickNumber(Math.floor(Math.random() * 20) + 1)
     setLuckyItem(getLucky())
-    setSelectedVideo(newVideo)
     // iOS対応: ユーザージェスチャーのコンテキスト内で同期的にplay()・ミュート解除
     if (videoRef.current) {
       videoRef.current.muted = false
-      videoRef.current.src = newVideo
-      videoRef.current.load()
+      videoRef.current.currentTime = 0
       videoRef.current.play().catch(err => console.warn('[omikuji] video play failed:', err))
     }
     setPhase('shaking')
