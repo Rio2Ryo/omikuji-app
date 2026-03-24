@@ -922,8 +922,9 @@ export default function OmikujiApp() {
     setStickNumber(Math.floor(Math.random() * 20) + 1)
     setLuckyItem(getLucky())
     setSelectedVideo(newVideo)
-    // iOS対応: ユーザージェスチャーのコンテキスト内で同期的にplay()
+    // iOS対応: ユーザージェスチャーのコンテキスト内で同期的にplay()・ミュート解除
     if (videoRef.current) {
+      videoRef.current.muted = false
       videoRef.current.src = newVideo
       videoRef.current.load()
       videoRef.current.play().catch(err => console.warn('[omikuji] video play failed:', err))
@@ -977,8 +978,8 @@ export default function OmikujiApp() {
           }}>
             {/* 3D シーンコンテナ */}
             <div style={{
-              width: 'min(360px, 94vw)',
-              height: 'min(480px, 62vw, 68vh)',
+              width: '100%',
+              height: '100dvh',
               margin: '0 auto',
               position: 'relative',
               borderRadius: '24px',
@@ -997,6 +998,8 @@ export default function OmikujiApp() {
               <video
                 ref={videoRef}
                 src={selectedVideo}
+                muted
+                autoPlay
                 playsInline
                 onEnded={() => {
                   setTilting(false)
