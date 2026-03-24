@@ -106,8 +106,11 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const body = await request.json()
 
-  // パスワード認証
-  if (body.password !== ADMIN_PASSWORD) {
+  // UUID所有者による自己更新は認証免除（UUID = アクセスキー）
+  const isOwnerUpdate = body.action === 'update' && typeof body.uuid === 'string' && !body.password
+
+  // パスワード認証（オーナー更新以外）
+  if (!isOwnerUpdate && body.password !== ADMIN_PASSWORD) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

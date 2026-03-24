@@ -7,6 +7,7 @@ import dynamic from 'next/dynamic'
 // Three.jsはSSRなしで動的ロード
 const OmikujiScene3D = dynamic(() => import('./OmikujiScene3D'), { ssr: false })
 import AdminPanel from './AdminPanel'
+import UserCardEdit from './UserCardEdit'
 
 // WebGL失敗時のエラーバウンダリ
 class WebGLErrorBoundary extends Component<
@@ -825,6 +826,7 @@ export default function OmikujiApp() {
   const [redirectUrl, setRedirectUrl] = useState('https://kataomoi.org')
   const [cardUuid, setCardUuid] = useState<string | null>(null)
   const [showAdmin, setShowAdmin] = useState(false)
+  const [showUserEdit, setShowUserEdit] = useState(false)
   const [countdown, setCountdown] = useState<number | null>(null)
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const countdownDelayRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -851,6 +853,7 @@ export default function OmikujiApp() {
         .then(r => r.json())
         .then(d => { if (d.url) setRedirectUrl(d.url) })
         .catch(() => {})
+      if (params.get('edit') === 'true') setShowUserEdit(true)
     }
     // uuidなし = デフォルトURL（kataomoi.org）のまま
   }, [])
@@ -1262,8 +1265,10 @@ export default function OmikujiApp() {
         </a>
       </div>
 
-      {/* カード管理画面（uuid付きアクセス時のみ表示） */}
+      {/* 管理者画面（パスワード認証あり） */}
       {showAdmin && <AdminPanel onClose={() => setShowAdmin(false)} />}
+      {/* 利用者カード編集（?uuid=...&edit=true） */}
+      {showUserEdit && cardUuid && <UserCardEdit uuid={cardUuid} onClose={() => setShowUserEdit(false)} />}
     </>
   )
 }

@@ -26,24 +26,23 @@ interface AdminPanelProps {
 }
 
 export default function AdminPanel({ onClose }: AdminPanelProps) {
+  // 認証
+  const [authed, setAuthed] = useState(false)
+  const [password, setPassword] = useState('')
+  const [authLoading, setAuthLoading] = useState(false)
+  const [authErr, setAuthErr] = useState('')
+
+  // カード管理
   const [config, setConfig] = useState<Config | null>(null)
   const [loading, setLoading] = useState(false)
   const [msg, setMsg] = useState('')
-
-  // 新規カード作成
   const [newLabel, setNewLabel] = useState('')
   const [newUrl, setNewUrl] = useState('')
-
-  // 編集中
   const [editUuid, setEditUuid] = useState<string | null>(null)
   const [editLabel, setEditLabel] = useState('')
   const [editUrl, setEditUrl] = useState('')
-
-  // 一括設定
   const [bulkUrl, setBulkUrl] = useState('')
   const [bulkSelected, setBulkSelected] = useState<Set<string>>(new Set())
-
-  // コピー済み
   const [copiedUuid, setCopiedUuid] = useState<string | null>(null)
 
   const showMsg = (m: string) => { setMsg(m); setTimeout(() => setMsg(''), 4000) }
@@ -58,7 +57,21 @@ export default function AdminPanel({ onClose }: AdminPanelProps) {
     setLoading(false)
   }, [])
 
-  useEffect(() => { loadConfig() }, [loadConfig])
+  useEffect(() => { if (authed) loadConfig() }, [authed, loadConfig])
+
+  const handleAuth = async () => {
+    if (!password) { setAuthErr('× パスワードを入力してください'); return }
+    setAuthLoading(true)
+    const r = await fetch('/api/redirect', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'auth', password }),
+    })
+    setAuthLoading(false)
+    if (r.status === 401) setAuthErr('× パスワードが違います')
+    else if (r.ok) setAuthed(true)
+    else setAuthErr('× エラーが発生しました')
+  }
 
   const post = async (body: object) => {
     setLoading(true)
@@ -66,7 +79,7 @@ export default function AdminPanel({ onClose }: AdminPanelProps) {
       const r = await fetch('/api/redirect', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
+        body: JSON.stringify({ ...body, password }),
       })
       const d = await r.json()
       setLoading(false)
@@ -91,11 +104,7 @@ export default function AdminPanel({ onClose }: AdminPanelProps) {
 
   const handleUpdate = async (uuid: string) => {
     const d = await post({ action: 'update', uuid, label: editLabel, url: editUrl })
-    if (d) {
-      showMsg('✓ 更新しました')
-      setEditUuid(null)
-      loadConfig()
-    }
+    if (d) { showMsg('✓ 更新しました'); setEditUuid(null); loadConfig() }
   }
 
   const handleDelete = async (uuid: string, label: string) => {
@@ -151,16 +160,56 @@ export default function AdminPanel({ onClose }: AdminPanelProps) {
     background: '#f8faff', color: '#333',
   }
 
+  const overlay: React.CSSProperties = {
+    position: 'fixed', inset: 0, zIndex: 100,
+    background: 'rgba(0,10,30,0.75)',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    padding: '16px',
+  }
+
+  // ── ログイン画面 ──────────────────────────────────
+  if (!authed) {
+    return (
+      <div style={overlay} onClick={e => e.target === e.currentTarget && onClose()}>
+        <div style={{
+          background: '#fff', borderRadius: '18px', padding: '28px',
+          width: '100%', maxWidth: '340px',
+          boxShadow: '0 24px 64px rgba(0,0,0,0.3)',
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+            <h2 style={{ fontSize: '15px', fontWeight: '700', color: K.navy, margin: 0 }}>🔒 管理者ログイン</h2>
+            <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: '22px', cursor: 'pointer', color: '#bbb', lineHeight: 1, padding: '4px' }}>×</button>
+          </div>
+          {authErr && (
+            <div style={{ padding: '9px 12px', borderRadius: '8px', marginBottom: '14px', fontSize: '13px', background: '#fff0f0', color: '#cc2222' }}>{authErr}</div>
+          )}
+          <input
+            type="password"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && handleAuth()}
+            placeholder="パスワード"
+            autoFocus
+            style={{
+              width: '100%', padding: '11px 13px', borderRadius: '9px',
+              border: '1.5px solid #d0d8e8', fontSize: '14px',
+              boxSizing: 'border-box', outline: 'none', marginBottom: '12px',
+            }}
+          />
+          <button onClick={handleAuth} disabled={authLoading} style={{
+            width: '100%', padding: '11px', borderRadius: '9px', border: 'none',
+            background: K.blue, color: '#fff', fontSize: '14px', fontWeight: '700', cursor: 'pointer',
+          }}>
+            {authLoading ? '確認中...' : 'ログイン'}
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  // ── 管理画面 ─────────────────────────────────────
   return (
-    <div
-      style={{
-        position: 'fixed', inset: 0, zIndex: 100,
-        background: 'rgba(0,10,30,0.75)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        padding: '16px',
-      }}
-      onClick={e => e.target === e.currentTarget && onClose()}
-    >
+    <div style={overlay} onClick={e => e.target === e.currentTarget && onClose()}>
       <div style={{
         background: K.white, borderRadius: '18px', padding: '24px',
         width: '100%', maxWidth: '520px',
