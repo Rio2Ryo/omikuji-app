@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef, Suspense, Component, ErrorInfo, ReactNode } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo, Suspense, Component, ErrorInfo, ReactNode } from 'react'
 import { useSearchParams } from 'next/navigation'
 import dynamic from 'next/dynamic'
 
