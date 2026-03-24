@@ -417,22 +417,24 @@ export default function AdminPanel({ onClose }: AdminPanelProps) {
 
                 {/* 既存グループ一覧 */}
                 {groups.map(g => (
-                  <div key={g} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                    <span style={{ flex: 1, fontSize: '13px', fontWeight: '600', color: K.navy }}>{g}</span>
-                    <select
-                      value={config?.groupThemes?.[g] || ''}
-                      onChange={async e => {
-                        const d = await post({ action: 'setGroupTheme', group: g, theme: e.target.value || 'default' })
-                        if (d) { showMsg(`✓ ${g} のテーマを変更しました`); loadConfig() }
-                      }}
-                      style={{ padding: '4px 8px', borderRadius: '6px', border: '1px solid #d0d8e8', fontSize: '12px', color: '#444', background: '#fff', outline: 'none' }}
-                    >
-                      {themeOptions}
-                    </select>
-                    <button onClick={() => handleDeleteGroup(g)} style={{
-                      padding: '4px 8px', fontSize: '11px', borderRadius: '6px',
-                      border: '1px solid #fcc', background: '#fff8f8', color: '#c44', cursor: 'pointer',
-                    }}>削除</button>
+                  <div key={g} style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '10px', padding: '10px', background: '#f8f0ff', borderRadius: '8px' }}>
+                    <span style={{ fontSize: '13px', fontWeight: '600', color: K.navy, wordBreak: 'keep-all' }}>{g}</span>
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <select
+                        value={config?.groupThemes?.[g] || ''}
+                        onChange={async e => {
+                          const d = await post({ action: 'setGroupTheme', group: g, theme: e.target.value || 'default' })
+                          if (d) { showMsg(`✓ ${g} のテーマを変更しました`); loadConfig() }
+                        }}
+                        style={{ flex: 1, padding: '4px 8px', borderRadius: '6px', border: '1px solid #d0d8e8', fontSize: '12px', color: '#444', background: '#fff', outline: 'none' }}
+                      >
+                        {themeOptions}
+                      </select>
+                      <button onClick={() => handleDeleteGroup(g)} style={{
+                        padding: '4px 10px', fontSize: '11px', borderRadius: '6px', flexShrink: 0,
+                        border: '1px solid #fcc', background: '#fff8f8', color: '#c44', cursor: 'pointer',
+                      }}>削除</button>
+                    </div>
                   </div>
                 ))}
               </section>
