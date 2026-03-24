@@ -811,6 +811,7 @@ export default function OmikujiApp() {
   const [countdown, setCountdown] = useState<number | null>(null)
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const countdownDelayRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const videoRef = useRef<HTMLVideoElement>(null)
   const [tilting, setTilting] = useState(false)
   const [history, setHistory] = useState<FortuneRecord[]>([])
   const [selectedVideo, setSelectedVideo] = useState<string>(() => `/videos/0${Math.floor(Math.random() * 4) + 1}.mp4`)
@@ -888,9 +889,14 @@ export default function OmikujiApp() {
     if (phase === 'shaking') {
       setShaking(true)
       setTilting(false)
-      // フェーズ遷移は動画のonEndedで制御。ここでは表示状態のみ設定。
+      // iOS対応: autoPlayに頼らずrefで明示的にplay()を呼ぶ
+      if (videoRef.current) {
+        videoRef.current.play().catch(err => {
+          console.warn('[omikuji] video play failed:', err)
+        })
+      }
     }
-  }, [phase])
+  }, [phase, selectedVideo])
 
   useEffect(() => {
     if (phase === 'stick') {
@@ -983,9 +989,9 @@ export default function OmikujiApp() {
 
                 {/* 動画アニメーション — 再生終了で結果へ遷移 */}
                 <video
+                  ref={videoRef}
                   key={selectedVideo}
                   src={selectedVideo}
-                  autoPlay
                   playsInline
                   onEnded={() => {
                     setTilting(false)
