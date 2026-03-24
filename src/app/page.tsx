@@ -888,12 +888,7 @@ export default function OmikujiApp() {
     if (phase === 'shaking') {
       setShaking(true)
       setTilting(false)
-      const t = setTimeout(() => {
-        setShaking(false)
-        setTilting(true)
-        setPhase('stick')
-      }, 2000)
-      return () => clearTimeout(t)
+      // フェーズ遷移は動画のonEndedで制御。ここでは表示状態のみ設定。
     }
   }, [phase])
 
@@ -986,36 +981,23 @@ export default function OmikujiApp() {
                   pointerEvents: 'none',
                 }} />
 
-                {/* 動画アニメーション */}
+                {/* 動画アニメーション — 再生終了で結果へ遷移 */}
                 <video
                   key={selectedVideo}
                   src={selectedVideo}
                   autoPlay
-                  muted
                   playsInline
+                  onEnded={() => {
+                    setTilting(false)
+                    setPhase('result')
+                    setTimeout(() => setShowEffects(true), 500)
+                  }}
                   style={{
                     position: 'absolute', inset: 0,
                     width: '100%', height: '100%',
                     objectFit: 'cover',
                   }}
                 />
-
-                {/* オーバーレイテキスト */}
-                <div style={{
-                  position: 'absolute', bottom: '20px', left: 0, right: 0,
-                  textAlign: 'center', zIndex: 10, pointerEvents: 'none',
-                }}>
-                  <p style={{
-                    fontSize: phase === 'shaking' ? '13px' : '18px',
-                    fontWeight: phase === 'shaking' ? '400' : '700',
-                    color: phase === 'shaking' ? 'rgba(220,200,140,0.8)' : 'rgba(240,220,120,0.95)',
-                    letterSpacing: '0.35em',
-                    textShadow: '0 1px 8px rgba(0,0,0,0.8)',
-                    transition: 'all 0.4s',
-                  }}>
-                    {phase === 'shaking' ? 'シャカシャカ…' : `${stickNumber} 番`}
-                  </p>
-                </div>
               </div>
 
               {/* 管理ボタン */}
