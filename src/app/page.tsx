@@ -889,14 +889,17 @@ export default function OmikujiApp() {
     if (phase === 'shaking') {
       setShaking(true)
       setTilting(false)
-      // iOS対応: autoPlayに頼らずrefで明示的にplay()を呼ぶ
-      if (videoRef.current) {
-        videoRef.current.play().catch(err => {
-          console.warn('[omikuji] video play failed:', err)
-        })
-      }
     }
-  }, [phase, selectedVideo])
+  }, [phase])
+
+  // 初回マウント時のみplay()を試みる（ジェスチャー不要の環境向け）
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.play().catch(err => {
+        console.warn('[omikuji] initial video play failed (expected on iOS):', err)
+      })
+    }
+  }, [])
 
   useEffect(() => {
     if (phase === 'stick') {
@@ -919,13 +922,20 @@ export default function OmikujiApp() {
   }, [])
 
   const handleReset = useCallback(() => {
+    const newVideo = `/videos/0${Math.floor(Math.random() * 4) + 1}.mp4`
     setShowEffects(false)
     setShaking(false)
     setTilting(false)
     setFortune(FORTUNES[Math.floor(Math.random() * FORTUNES.length)])
     setStickNumber(Math.floor(Math.random() * 20) + 1)
     setLuckyItem(getLucky())
-    setSelectedVideo(`/videos/0${Math.floor(Math.random() * 4) + 1}.mp4`)
+    setSelectedVideo(newVideo)
+    // iOS対応: ユーザージェスチャーのコンテキスト内で同期的にplay()
+    if (videoRef.current) {
+      videoRef.current.src = newVideo
+      videoRef.current.load()
+      videoRef.current.play().catch(err => console.warn('[omikuji] video play failed:', err))
+    }
     setPhase('shaking')
   }, [])
 
@@ -966,53 +976,57 @@ export default function OmikujiApp() {
           alignItems: 'center', justifyContent: 'center', padding: '16px 20px',
         }}>
 
-          {/* シャカシャカ & 棒が出るシーン */}
-          {(phase === 'shaking' || phase === 'stick') && (
-            <div style={{ textAlign: 'center', animation: 'fadeInUp 0.5s ease forwards', width: '100%' }}>
-              {/* 3D シーンコンテナ */}
+          {/* シャカシャカ & 棒が出るシーン — display:noneでDOMに常駐させiOSのautoplay制限を回避 */}
+          <div style={{
+            display: (phase === 'shaking' || phase === 'stick') ? 'block' : 'none',
+            textAlign: 'center',
+            animation: 'fadeInUp 0.5s ease forwards',
+            width: '100%',
+          }}>
+            {/* 3D シーンコンテナ — 縦型（9:16）*/}
+            <div style={{
+              aspectRatio: '9/16',
+              height: 'min(85vh, 620px)',
+              width: 'auto',
+              maxWidth: 'min(100%, calc(min(85vh, 620px) * 9 / 16))',
+              margin: '0 auto',
+              position: 'relative',
+              borderRadius: '24px',
+              overflow: 'hidden',
+              background: 'linear-gradient(160deg, #0a1428 0%, #0f1f3d 40%, #1a3060 100%)',
+              boxShadow: '0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(132,172,252,0.12)',
+            }}>
+              {/* 背景：光の放射 */}
               <div style={{
-                width: 'min(360px, 94vw)',
-                height: 'min(480px, 62vw, 68vh)',
-                margin: '0 auto',
-                position: 'relative',
-                borderRadius: '24px',
-                overflow: 'hidden',
-                background: 'linear-gradient(160deg, #0a1428 0%, #0f1f3d 40%, #1a3060 100%)',
-                boxShadow: '0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(132,172,252,0.12)',
-              }}>
-                {/* 背景：光の放射 */}
-                <div style={{
-                  position: 'absolute', inset: 0, zIndex: 0,
-                  background: 'radial-gradient(ellipse 70% 60% at 50% 60%, rgba(30,90,160,0.35) 0%, transparent 70%)',
-                  pointerEvents: 'none',
-                }} />
+                position: 'absolute', inset: 0, zIndex: 0,
+                background: 'radial-gradient(ellipse 70% 60% at 50% 60%, rgba(30,90,160,0.35) 0%, transparent 70%)',
+                pointerEvents: 'none',
+              }} />
 
-                {/* 動画アニメーション — 再生終了で結果へ遷移 */}
-                <video
-                  ref={videoRef}
-                  key={selectedVideo}
-                  src={selectedVideo}
-                  playsInline
-                  onEnded={() => {
-                    setTilting(false)
-                    setPhase('result')
-                    setTimeout(() => setShowEffects(true), 500)
-                  }}
-                  style={{
-                    position: 'absolute', inset: 0,
-                    width: '100%', height: '100%',
-                    objectFit: 'cover',
-                  }}
-                />
-              </div>
-
-              {/* 管理ボタン */}
-              <button
-                onClick={() => setShowAdmin(true)}
-                style={{ marginTop: '14px', padding: '6px 16px', fontSize: '11px', background: 'transparent', color: 'rgba(100,130,180,0.5)', border: '1px solid rgba(100,130,180,0.2)', borderRadius: '6px', cursor: 'pointer', letterSpacing: '0.1em' }}
-              >⚙ 管理</button>
+              {/* 動画アニメーション — 再生終了で結果へ遷移 */}
+              <video
+                ref={videoRef}
+                src={selectedVideo}
+                playsInline
+                onEnded={() => {
+                  setTilting(false)
+                  setPhase('result')
+                  setTimeout(() => setShowEffects(true), 500)
+                }}
+                style={{
+                  position: 'absolute', inset: 0,
+                  width: '100%', height: '100%',
+                  objectFit: 'cover',
+                }}
+              />
             </div>
-          )}
+
+            {/* 管理ボタン */}
+            <button
+              onClick={() => setShowAdmin(true)}
+              style={{ marginTop: '14px', padding: '6px 16px', fontSize: '11px', background: 'transparent', color: 'rgba(100,130,180,0.5)', border: '1px solid rgba(100,130,180,0.2)', borderRadius: '6px', cursor: 'pointer', letterSpacing: '0.1em' }}
+            >⚙ 管理</button>
+          </div>
 
           {/* 結果 */}
           {isResult && (
