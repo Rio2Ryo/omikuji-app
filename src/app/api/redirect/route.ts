@@ -111,6 +111,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  // パスワード確認のみ: { action: 'auth' }
+  if (body.action === 'auth') {
+    return NextResponse.json({ ok: true })
+  }
+
   const config = await fetchConfig()
 
   // 新規カード発行: { action: 'create', label, url }

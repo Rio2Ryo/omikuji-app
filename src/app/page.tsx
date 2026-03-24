@@ -599,6 +599,7 @@ function CardAdminPanel({ uuid, onClose, onSaved }: { uuid: string; onClose: () 
 
   const [password, setPassword] = useState('')
   const [authed, setAuthed] = useState(false)
+  const [authLoading, setAuthLoading] = useState(false)
   const [redirectUrl, setRedirectUrl] = useState('')
   const [inputUrl, setInputUrl] = useState('')
   const [label, setLabel] = useState('')
@@ -665,10 +666,15 @@ function CardAdminPanel({ uuid, onClose, onSaved }: { uuid: string; onClose: () 
             type="password"
             value={password}
             onChange={e => setPassword(e.target.value)}
-            onKeyDown={e => {
+            onKeyDown={async e => {
               if (e.key === 'Enter') {
-                if (password) setAuthed(true)
-                else setMsg('× パスワードを入力してください')
+                if (!password) { setMsg('× パスワードを入力してください'); return }
+                setAuthLoading(true)
+                const r = await fetch('/api/redirect', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'auth', password }) })
+                setAuthLoading(false)
+                if (r.status === 401) setMsg('× パスワードが違います')
+                else if (r.ok) setAuthed(true)
+                else setMsg('× エラーが発生しました')
               }
             }}
             placeholder="パスワード"
@@ -680,17 +686,24 @@ function CardAdminPanel({ uuid, onClose, onSaved }: { uuid: string; onClose: () 
             }}
           />
           <button
-            onClick={() => {
-              if (password) setAuthed(true)
-              else setMsg('× パスワードを入力してください')
+            disabled={authLoading}
+            onClick={async () => {
+              if (!password) { setMsg('× パスワードを入力してください'); return }
+              setAuthLoading(true)
+              const r = await fetch('/api/redirect', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'auth', password }) })
+              setAuthLoading(false)
+              if (r.status === 401) setMsg('× パスワードが違います')
+              else if (r.ok) setAuthed(true)
+              else setMsg('× エラーが発生しました')
             }}
             style={{
               width: '100%', padding: '12px', background: K.navy, color: '#fff',
               border: 'none', borderRadius: '9px', fontSize: '14px',
-              fontWeight: '700', cursor: 'pointer',
+              fontWeight: '700', cursor: authLoading ? 'not-allowed' : 'pointer',
+              opacity: authLoading ? 0.7 : 1,
             }}
           >
-            ログイン
+            {authLoading ? '確認中...' : 'ログイン'}
           </button>
         </div>
       </div>
