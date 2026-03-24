@@ -1,0 +1,63 @@
+import type { Theme } from './index'
+
+export const defaultTheme: Theme = {
+  id: 'default',
+  name: 'おみくじ（掛け軸）',
+  video: '/videos/05.mp4',
+  fortunes: [
+    {
+      id: 'daikichi', result: '大吉', reading: 'だいきち',
+      message: '直感を信じて動いて。今日、扉は開く。',
+      resultColor: '#c07010',
+      bg: 'linear-gradient(150deg, #fffbf0 0%, #fff3c0 40%, #ffe080 100%)',
+      cardBg: 'rgba(255,255,255,0.92)', cardBorder: '#e8c030',
+      accent: '#b86800', shimmer: 'shimmerGold',
+      anim: 'scaleIn 0.5s cubic-bezier(0.34,1.8,0.64,1) forwards',
+    },
+    {
+      id: 'kichi', result: '吉', reading: 'きち',
+      message: '自分から動こう。小さな一歩が未来を変える。',
+      resultColor: '#1e5a9f',
+      bg: 'linear-gradient(150deg, #f5f7fa 0%, #ddeeff 100%)',
+      cardBg: 'rgba(255,255,255,0.92)', cardBorder: '#84acfc',
+      accent: '#1e5a9f', shimmer: 'shimmerBlue',
+      anim: 'scaleIn 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards',
+    },
+    {
+      id: 'chukichi', result: '中吉', reading: 'ちゅうきち',
+      message: '焦らなくていい。丁寧に積み重ねる日。',
+      resultColor: '#2a7a40',
+      bg: 'linear-gradient(150deg, #f0faf4 0%, #c8ecd4 100%)',
+      cardBg: 'rgba(255,255,255,0.92)', cardBorder: '#70c888',
+      accent: '#2a7a40', shimmer: 'shimmerBlue',
+      anim: 'scaleIn 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards',
+    },
+    {
+      id: 'shokichi', result: '小吉', reading: 'しょうきち',
+      message: '与えることを意識して。親切が実を結ぶ。',
+      resultColor: '#1a70a0',
+      bg: 'linear-gradient(150deg, #f0f6fc 0%, #cce0f4 100%)',
+      cardBg: 'rgba(255,255,255,0.92)', cardBorder: '#60a8d8',
+      accent: '#1a70a0', shimmer: 'shimmerBlue',
+      anim: 'scaleIn 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards',
+    },
+    {
+      id: 'suekichi', result: '末吉', reading: 'すえきち',
+      message: '今は土台を作る時間。芽は必ず出る。',
+      resultColor: '#7040a0',
+      bg: 'linear-gradient(150deg, #f6f0fc 0%, #e0ccf0 100%)',
+      cardBg: 'rgba(255,255,255,0.92)', cardBorder: '#a870d0',
+      accent: '#7040a0', shimmer: 'shimmerBlue',
+      anim: 'scaleIn 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards',
+    },
+    {
+      id: 'kyo', result: '凶', reading: 'きょう',
+      message: '嵐は過ぎ去る。今日は守りに徹して。',
+      resultColor: '#505860',
+      bg: 'linear-gradient(150deg, #1a2030 0%, #0f1520 100%)',
+      cardBg: 'rgba(30,36,50,0.92)', cardBorder: '#404858',
+      accent: '#8090a8', shimmer: 'shimmerGray',
+      anim: 'sadDrop 0.6s cubic-bezier(0.22,1,0.36,1) forwards',
+    },
+  ],
+}

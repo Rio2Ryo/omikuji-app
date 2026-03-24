@@ -12,6 +12,7 @@ export interface CardConfig {
   url: string
   createdAt: string
   group?: string      // グループ名（例：「イベントA」「店舗B」）
+  theme?: string      // テーマID（例：「default」「ivision」）
 }
 
 export interface RedirectConfig {
@@ -99,7 +100,7 @@ export async function GET(request: Request) {
     if (!card) {
       return NextResponse.json({ error: 'Card not found', uuid }, { status: 404 })
     }
-    return NextResponse.json({ url: card.url, uuid, label: card.label })
+    return NextResponse.json({ url: card.url, uuid, label: card.label, theme: card.theme || 'default' })
   }
   return NextResponse.json(config)
 }
@@ -132,6 +133,7 @@ export async function POST(request: Request) {
       url: body.url,
       createdAt: new Date().toISOString(),
       ...(body.group ? { group: body.group } : {}),
+      ...(body.theme ? { theme: body.theme } : {}),
     }
     config.updatedAt = new Date().toISOString()
     const ok = await saveConfig(config)
@@ -173,6 +175,7 @@ export async function POST(request: Request) {
     }
     if (body.label !== undefined) config.cards[body.uuid].label = body.label
     if (body.group !== undefined) config.cards[body.uuid].group = body.group || undefined
+    if (body.theme !== undefined) config.cards[body.uuid].theme = body.theme || undefined
     config.updatedAt = new Date().toISOString()
     const ok = await saveConfig(config)
     return NextResponse.json({ ok, ...config.cards[body.uuid] })

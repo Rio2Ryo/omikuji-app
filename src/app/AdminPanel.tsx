@@ -15,6 +15,7 @@ interface CardConfig {
   url: string
   createdAt: string
   group?: string
+  theme?: string
 }
 
 interface Config {
@@ -53,6 +54,7 @@ export default function AdminPanel({ onClose }: AdminPanelProps) {
   const [editLabel, setEditLabel] = useState('')
   const [editUrl, setEditUrl] = useState('')
   const [editGroup, setEditGroup] = useState('')
+  const [editTheme, setEditTheme] = useState('')
 
   // 一括URL変更
   const [bulkUrl, setBulkUrl] = useState('')
@@ -133,7 +135,7 @@ export default function AdminPanel({ onClose }: AdminPanelProps) {
   }
 
   const handleUpdate = async (uuid: string) => {
-    const d = await post({ action: 'update', uuid, label: editLabel, url: editUrl, group: editGroup || undefined })
+    const d = await post({ action: 'update', uuid, label: editLabel, url: editUrl, group: editGroup || undefined, theme: editTheme || undefined })
     if (d) { showMsg('✓ 更新しました'); setEditUuid(null); loadConfig() }
   }
 
@@ -418,7 +420,7 @@ export default function AdminPanel({ onClose }: AdminPanelProps) {
                           </div>
                           <div style={{ display: 'flex', gap: '6px', flexShrink: 0 }}>
                             <button
-                              onClick={() => { setEditUuid(editUuid === card.uuid ? null : card.uuid); setEditLabel(card.label); setEditUrl(card.url); setEditGroup(card.group || '') }}
+                              onClick={() => { setEditUuid(editUuid === card.uuid ? null : card.uuid); setEditLabel(card.label); setEditUrl(card.url); setEditGroup(card.group || ''); setEditTheme(card.theme || '') }}
                               style={{ ...btnS, padding: '5px 10px', fontSize: '11px' }}>
                               {editUuid === card.uuid ? '閉じる' : '編集'}
                             </button>
@@ -463,6 +465,11 @@ export default function AdminPanel({ onClose }: AdminPanelProps) {
                               placeholder="ラベル" style={{ ...inp, marginBottom: '8px' }} autoFocus />
                             <input value={editGroup} onChange={e => setEditGroup(e.target.value)}
                               placeholder="グループ名（省略可）" style={{ ...inp, marginBottom: '8px' }} />
+                            <select value={editTheme} onChange={e => setEditTheme(e.target.value)}
+                              style={{ ...inp, marginBottom: '8px', color: editTheme ? '#333' : '#999' }}>
+                              <option value="">テーマ: default（掛け軸）</option>
+                              <option value="ivision">渋谷愛ビジョン</option>
+                            </select>
                             <input value={editUrl} onChange={e => setEditUrl(e.target.value)}
                               placeholder="リダイレクト先URL（https://...）" style={{ ...inp, marginBottom: '10px' }} />
                             <div style={{ display: 'flex', gap: '8px' }}>

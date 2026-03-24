@@ -8,6 +8,7 @@ import dynamic from 'next/dynamic'
 const OmikujiScene3D = dynamic(() => import('./OmikujiScene3D'), { ssr: false })
 import AdminPanel from './AdminPanel'
 import UserCardEdit from './UserCardEdit'
+import { defaultTheme, loadTheme, type Theme } from '../themes/index'
 
 // WebGL失敗時のエラーバウンダリ
 class WebGLErrorBoundary extends Component<
@@ -50,62 +51,8 @@ const LUCKY_ITEMS = [
   '苔玉', '竹の箸', '陶器のカップ', '線香',
 ]
 
-const FORTUNES = [
-  {
-    id: 'daikichi', result: '大吉', reading: 'だいきち',
-    message: '直感を信じて動いて。今日、扉は開く。',
-    resultColor: '#c07010',
-    bg: 'linear-gradient(150deg, #fffbf0 0%, #fff3c0 40%, #ffe080 100%)',
-    cardBg: 'rgba(255,255,255,0.92)', cardBorder: '#e8c030',
-    accent: '#b86800', shimmer: 'shimmerGold',
-    anim: 'scaleIn 0.5s cubic-bezier(0.34,1.8,0.64,1) forwards',
-  },
-  {
-    id: 'kichi', result: '吉', reading: 'きち',
-    message: '自分から動こう。小さな一歩が未来を変える。',
-    resultColor: K.blue,
-    bg: `linear-gradient(150deg, ${K.bg} 0%, #ddeeff 100%)`,
-    cardBg: 'rgba(255,255,255,0.92)', cardBorder: K.light,
-    accent: K.blue, shimmer: 'shimmerBlue',
-    anim: 'scaleIn 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards',
-  },
-  {
-    id: 'chukichi', result: '中吉', reading: 'ちゅうきち',
-    message: '焦らなくていい。丁寧に積み重ねる日。',
-    resultColor: '#2a7a40',
-    bg: 'linear-gradient(150deg, #f0faf4 0%, #c8ecd4 100%)',
-    cardBg: 'rgba(255,255,255,0.92)', cardBorder: '#70c888',
-    accent: '#2a7a40', shimmer: 'shimmerBlue',
-    anim: 'scaleIn 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards',
-  },
-  {
-    id: 'shokichi', result: '小吉', reading: 'しょうきち',
-    message: '与えることを意識して。親切が実を結ぶ。',
-    resultColor: '#1a70a0',
-    bg: 'linear-gradient(150deg, #f0f6fc 0%, #cce0f4 100%)',
-    cardBg: 'rgba(255,255,255,0.92)', cardBorder: '#60a8d8',
-    accent: '#1a70a0', shimmer: 'shimmerBlue',
-    anim: 'scaleIn 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards',
-  },
-  {
-    id: 'suekichi', result: '末吉', reading: 'すえきち',
-    message: '今は土台を作る時間。芽は必ず出る。',
-    resultColor: '#7040a0',
-    bg: 'linear-gradient(150deg, #f6f0fc 0%, #e0ccf0 100%)',
-    cardBg: 'rgba(255,255,255,0.92)', cardBorder: '#a870d0',
-    accent: '#7040a0', shimmer: 'shimmerBlue',
-    anim: 'scaleIn 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards',
-  },
-  {
-    id: 'kyo', result: '凶', reading: 'きょう',
-    message: '嵐は過ぎ去る。今日は守りに徹して。',
-    resultColor: '#505860',
-    bg: 'linear-gradient(150deg, #1a2030 0%, #0f1520 100%)',
-    cardBg: 'rgba(30,36,50,0.92)', cardBorder: '#404858',
-    accent: '#8090a8', shimmer: 'shimmerGray',
-    anim: 'sadDrop 0.6s cubic-bezier(0.22,1,0.36,1) forwards',
-  },
-]
+// FORTUNES はデフォルトテーマから取得（テーマシステム経由で動的に切り替え可能）
+const FORTUNES = defaultTheme.fortunes
 
 function getLucky(): string {
   return LUCKY_ITEMS[Math.floor(Math.random() * LUCKY_ITEMS.length)]
@@ -827,13 +774,15 @@ export default function OmikujiApp() {
   const [cardUuid, setCardUuid] = useState<string | null>(null)
   const [showAdmin, setShowAdmin] = useState(false)
   const [showUserEdit, setShowUserEdit] = useState(false)
+  const [activeTheme, setActiveTheme] = useState<Theme>(defaultTheme)
   const [countdown, setCountdown] = useState<number | null>(null)
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const countdownDelayRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
   const [tilting, setTilting] = useState(false)
   const [history, setHistory] = useState<FortuneRecord[]>([])
-  const [selectedVideo] = useState<string>('/videos/05.mp4')
+  // 動画はアクティブテーマから取得
+  const selectedVideo = activeTheme.video
 
   const isDaikichi = fortune.id === 'daikichi'
   const isKyo = fortune.id === 'kyo'
@@ -851,7 +800,15 @@ export default function OmikujiApp() {
       setCardUuid(uuid)
       fetch(`/api/redirect?uuid=${encodeURIComponent(uuid)}`)
         .then(r => r.json())
-        .then(d => { if (d.url) setRedirectUrl(d.url) })
+        .then(d => {
+          if (d.url) setRedirectUrl(d.url)
+          if (d.theme && d.theme !== 'default') {
+            const theme = loadTheme(d.theme)
+            setActiveTheme(theme)
+            // テーマ変更時に占い結果を新テーマから再抽選
+            setFortune(theme.fortunes[Math.floor(Math.random() * theme.fortunes.length)])
+          }
+        })
         .catch(() => {})
     }
     // uuidなし = デフォルトURL（kataomoi.org）のまま
@@ -936,7 +893,7 @@ export default function OmikujiApp() {
     setShowEffects(false)
     setShaking(false)
     setTilting(false)
-    setFortune(FORTUNES[Math.floor(Math.random() * FORTUNES.length)])
+    setFortune(activeTheme.fortunes[Math.floor(Math.random() * activeTheme.fortunes.length)])
     setStickNumber(Math.floor(Math.random() * 20) + 1)
     setLuckyItem(getLucky())
     // iOS対応: ユーザージェスチャーのコンテキスト内で同期的にplay()・ミュート解除
