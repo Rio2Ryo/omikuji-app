@@ -61,6 +61,16 @@ export default function AdminPanel({ onClose }: AdminPanelProps) {
   const [bulkUrl, setBulkUrl] = useState('')
   const [bulkSelected, setBulkSelected] = useState<Set<string>>(new Set())
 
+  // テーマ
+  const [newTheme, setNewTheme] = useState('')
+  const [bulkCreateTheme, setBulkCreateTheme] = useState('')
+  const [bulkTheme, setBulkTheme] = useState('')
+
+  // グループ管理
+  const [newGroupName, setNewGroupName] = useState('')
+  const [newGroupTheme, setNewGroupTheme] = useState('')
+  const [showNewGroup, setShowNewGroup] = useState(false)
+
   // グループフィルター
   const [groupFilter, setGroupFilter] = useState('')
 
@@ -117,20 +127,20 @@ export default function AdminPanel({ onClose }: AdminPanelProps) {
 
   const handleCreate = async () => {
     if (!newUrl) { showMsg('× URLを入力してください'); return }
-    const d = await post({ action: 'create', label: newLabel || undefined, url: newUrl, group: newGroup || undefined })
+    const d = await post({ action: 'create', label: newLabel || undefined, url: newUrl, group: newGroup || undefined, theme: newTheme || undefined })
     if (d) {
       showMsg(`✓ カード「${d.label}」を発行しました`)
-      setNewLabel(''); setNewUrl(''); setNewGroup('')
+      setNewLabel(''); setNewUrl(''); setNewGroup(''); setNewTheme('')
       loadConfig()
     }
   }
 
   const handleBulkCreate = async () => {
     if (!bulkCreateUrl) { showMsg('× URLを入力してください'); return }
-    const d = await post({ action: 'bulkCreate', count: bulkCreateCount, url: bulkCreateUrl, group: bulkCreateGroup || undefined })
+    const d = await post({ action: 'bulkCreate', count: bulkCreateCount, url: bulkCreateUrl, group: bulkCreateGroup || undefined, theme: bulkCreateTheme || undefined })
     if (d) {
       showMsg(`✓ ${d.count}枚のカードを一括発行しました`)
-      setBulkCreateUrl(''); setBulkCreateGroup(''); setBulkCreateCount(10)
+      setBulkCreateUrl(''); setBulkCreateGroup(''); setBulkCreateCount(10); setBulkCreateTheme('')
       loadConfig()
     }
   }
@@ -168,6 +178,33 @@ export default function AdminPanel({ onClose }: AdminPanelProps) {
     }
   }
 
+  const handleBulkThemeUpdate = async () => {
+    if (bulkSelected.size === 0 && !groupFilter) { showMsg('× カードを選択またはグループフィルターをかけてください'); return }
+    const uuids = bulkSelected.size > 0 ? Array.from(bulkSelected) : filteredCards.map(c => c.uuid)
+    const d = await post({ action: 'bulkThemeUpdate', uuids, theme: bulkTheme })
+    if (d) {
+      showMsg(`✓ ${d.updated}枚のテーマを変更しました`)
+      setBulkTheme(''); setBulkSelected(new Set())
+      loadConfig()
+    }
+  }
+
+  const handleDeleteGroup = async (group: string) => {
+    if (!confirm(`グループ「${group}」を削除しますか？所属カードのグループも解除されます。`)) return
+    const d = await post({ action: 'deleteGroup', group })
+    if (d) { showMsg(`✓ グループ「${group}」を削除しました`); loadConfig() }
+  }
+
+  const handleCreateGroup = async () => {
+    if (!newGroupName) { showMsg('× グループ名を入力してください'); return }
+    const d = await post({ action: 'setGroupTheme', group: newGroupName, theme: newGroupTheme || 'default' })
+    if (d) {
+      showMsg(`✓ グループ「${newGroupName}」を作成しました`)
+      setNewGroupName(''); setNewGroupTheme(''); setShowNewGroup(false)
+      loadConfig()
+    }
+  }
+
   const copyUrl = async (text: string, uuid: string) => {
     await navigator.clipboard.writeText(text)
     setCopiedUuid(uuid)
@@ -197,7 +234,10 @@ export default function AdminPanel({ onClose }: AdminPanelProps) {
       )
     : []
 
-  const groups = Array.from(new Set(allCards.map(c => c.group || '').filter(Boolean))).sort()
+  const groups = Array.from(new Set([
+    ...allCards.map(c => c.group || '').filter(Boolean),
+    ...Object.keys(config?.groupThemes || {}),
+  ])).sort()
 
   const filteredCards = groupFilter
     ? allCards.filter(c => (c.group || '') === groupFilter)
@@ -223,6 +263,13 @@ export default function AdminPanel({ onClose }: AdminPanelProps) {
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     padding: '16px',
   }
+
+  const themeOptions = (
+    <>
+      <option value="">テーマ: default（掛け軸）</option>
+      <option value="ivision">渋谷愛ビジョン</option>
+    </>
+  )
 
   // ── ログイン画面 ──────────────────────────────────
   if (!authed) {
@@ -304,6 +351,10 @@ export default function AdminPanel({ onClose }: AdminPanelProps) {
                 placeholder="ラベル（例：春キャンペーンA）" style={{ ...inp, marginBottom: '8px' }} />
               <input value={newGroup} onChange={e => setNewGroup(e.target.value)}
                 placeholder="グループ名（省略可、例：イベントA）" style={{ ...inp, marginBottom: '8px' }} />
+              <select value={newTheme} onChange={e => setNewTheme(e.target.value)}
+                style={{ ...inp, marginBottom: '8px', color: newTheme ? '#333' : '#999' }}>
+                {themeOptions}
+              </select>
               <input value={newUrl} onChange={e => setNewUrl(e.target.value)}
                 placeholder="リダイレクト先URL（https://...）" style={{ ...inp, marginBottom: '10px' }} />
               <button onClick={handleCreate} style={{ ...btnP, width: '100%' }} disabled={loading}>
@@ -323,8 +374,15 @@ export default function AdminPanel({ onClose }: AdminPanelProps) {
                   style={{ ...inp, width: '80px', flexShrink: 0 }}
                 />
                 <input value={bulkCreateGroup} onChange={e => setBulkCreateGroup(e.target.value)}
-                  placeholder="グループ名（省略可）" style={{ ...inp }} />
+                  placeholder="グループ名（省略可）" style={{ ...inp }} list="groups-datalist" />
               </div>
+              <datalist id="groups-datalist">
+                {groups.map(g => <option key={g} value={g} />)}
+              </datalist>
+              <select value={bulkCreateTheme} onChange={e => setBulkCreateTheme(e.target.value)}
+                style={{ ...inp, marginBottom: '8px', color: bulkCreateTheme ? '#333' : '#999' }}>
+                {themeOptions}
+              </select>
               <input value={bulkCreateUrl} onChange={e => setBulkCreateUrl(e.target.value)}
                 placeholder="リダイレクト先URL（https://...）" style={{ ...inp, marginBottom: '10px' }} />
               <button onClick={handleBulkCreate} style={{ ...btnP, width: '100%', background: '#1a8a50' }} disabled={loading}>
@@ -332,32 +390,51 @@ export default function AdminPanel({ onClose }: AdminPanelProps) {
               </button>
             </section>
 
-            {/* グループテーマ設定 */}
-            {groups.length > 0 && (
+            {/* グループ管理 */}
+            {(groups.length > 0 || showNewGroup) && (
               <section style={{ marginBottom: '16px', padding: '16px', background: '#fdf4ff', borderRadius: '12px', border: '1px solid #ddc8f0' }}>
-                <h3 style={{ fontSize: '13px', fontWeight: '700', color: K.navy, marginBottom: '12px' }}>🎨 グループテーマ設定</h3>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {groups.map(group => {
-                    const currentTheme = config.groupThemes?.[group] || ''
-                    return (
-                      <div key={group} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <span style={{ fontSize: '13px', color: K.navy, flex: 1, fontWeight: '600' }}>{group}</span>
-                        <select
-                          value={currentTheme}
-                          onChange={async e => {
-                            const theme = e.target.value
-                            const d = await post({ action: 'setGroupTheme', group, theme })
-                            if (d) { showMsg(`✓ ${group} のテーマを設定しました`); loadConfig() }
-                          }}
-                          style={{ padding: '6px 10px', borderRadius: '7px', border: '1px solid #d0d8e8', fontSize: '12px', color: '#444', background: '#fff', outline: 'none', cursor: 'pointer' }}
-                        >
-                          <option value="">default（掛け軸）</option>
-                          <option value="ivision">渋谷愛ビジョン</option>
-                        </select>
-                      </div>
-                    )
-                  })}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                  <h3 style={{ fontSize: '13px', fontWeight: '700', color: K.navy, margin: 0 }}>🗂 グループ管理</h3>
+                  <button onClick={() => setShowNewGroup(v => !v)} style={{ ...btnS, padding: '4px 10px', fontSize: '11px' }}>
+                    {showNewGroup ? '閉じる' : '＋ 新規グループ'}
+                  </button>
                 </div>
+
+                {/* 新規グループ作成 */}
+                {showNewGroup && (
+                  <div style={{ padding: '12px', background: '#f8f0ff', borderRadius: '8px', marginBottom: '12px', border: '1px solid #ddc8f0' }}>
+                    <input value={newGroupName} onChange={e => setNewGroupName(e.target.value)}
+                      placeholder="グループ名" style={{ ...inp, marginBottom: '8px' }} autoFocus />
+                    <select value={newGroupTheme} onChange={e => setNewGroupTheme(e.target.value)}
+                      style={{ ...inp, marginBottom: '8px', color: newGroupTheme ? '#333' : '#999' }}>
+                      {themeOptions}
+                    </select>
+                    <button onClick={handleCreateGroup} style={{ ...btnP, width: '100%', background: '#7b2d8b' }} disabled={loading}>
+                      グループを作成
+                    </button>
+                  </div>
+                )}
+
+                {/* 既存グループ一覧 */}
+                {groups.map(g => (
+                  <div key={g} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                    <span style={{ flex: 1, fontSize: '13px', fontWeight: '600', color: K.navy }}>{g}</span>
+                    <select
+                      value={config?.groupThemes?.[g] || ''}
+                      onChange={async e => {
+                        const d = await post({ action: 'setGroupTheme', group: g, theme: e.target.value || 'default' })
+                        if (d) { showMsg(`✓ ${g} のテーマを変更しました`); loadConfig() }
+                      }}
+                      style={{ padding: '4px 8px', borderRadius: '6px', border: '1px solid #d0d8e8', fontSize: '12px', color: '#444', background: '#fff', outline: 'none' }}
+                    >
+                      {themeOptions}
+                    </select>
+                    <button onClick={() => handleDeleteGroup(g)} style={{
+                      padding: '4px 8px', fontSize: '11px', borderRadius: '6px',
+                      border: '1px solid #fcc', background: '#fff8f8', color: '#c44', cursor: 'pointer',
+                    }}>削除</button>
+                  </div>
+                ))}
               </section>
             )}
 
@@ -396,6 +473,15 @@ export default function AdminPanel({ onClose }: AdminPanelProps) {
                       一括削除
                     </button>
                   )}
+                </div>
+                <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
+                  <select value={bulkTheme} onChange={e => setBulkTheme(e.target.value)}
+                    style={{ ...inp, flex: 1, color: bulkTheme ? '#333' : '#999' }}>
+                    {themeOptions}
+                  </select>
+                  <button onClick={handleBulkThemeUpdate} style={{ ...btnP, background: '#7b2d8b', whiteSpace: 'nowrap' }} disabled={loading || !bulkTheme}>
+                    {bulkSelected.size > 0 ? `${bulkSelected.size}枚テーマ変更` : groupFilter ? 'フィルタ全件テーマ変更' : 'テーマ変更'}
+                  </button>
                 </div>
               </section>
             )}
