@@ -106,6 +106,11 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const body = await request.json()
 
+  // パスワード認証
+  if (body.password !== ADMIN_PASSWORD) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   const config = await fetchConfig()
 
   // 新規カード発行: { action: 'create', label, url }

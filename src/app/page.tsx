@@ -1,12 +1,29 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef, Suspense } from 'react'
+import { useState, useEffect, useCallback, useRef, Suspense, Component, ErrorInfo, ReactNode } from 'react'
 import { useSearchParams } from 'next/navigation'
 import dynamic from 'next/dynamic'
-import AdminPanel from './AdminPanel'
 
 // Three.jsはSSRなしで動的ロード
 const OmikujiScene3D = dynamic(() => import('./OmikujiScene3D'), { ssr: false })
+
+// WebGL失敗時のエラーバウンダリ
+class WebGLErrorBoundary extends Component<
+  { fallback: ReactNode; children: ReactNode },
+  { hasError: boolean }
+> {
+  constructor(props: { fallback: ReactNode; children: ReactNode }) {
+    super(props)
+    this.state = { hasError: false }
+  }
+  static getDerivedStateFromError() { return { hasError: true } }
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    console.warn('WebGL/Three.js failed, switching to SVG fallback:', error, info)
+  }
+  render() {
+    return this.state.hasError ? this.props.fallback : this.props.children
+  }
+}
 
 // KATAOMOI ブランドカラー
 const K = {
@@ -104,7 +121,7 @@ interface FortuneRecord {
   date: string      // YYYY/MM/DD HH:mm
 }
 const HISTORY_KEY = 'omikuji_history'
-const HISTORY_MAX = 10
+const HISTORY_MAX = 5
 
 function loadHistory(): FortuneRecord[] {
   if (typeof window === 'undefined') return []
@@ -580,6 +597,8 @@ function CardAdminPanel({ uuid, onClose, onSaved }: { uuid: string; onClose: () 
     ? `${window.location.origin}/?uuid=${uuid}`
     : `https://omikuji-app-ten.vercel.app/?uuid=${uuid}`
 
+  const [password, setPassword] = useState('')
+  const [authed, setAuthed] = useState(false)
   const [redirectUrl, setRedirectUrl] = useState('')
   const [inputUrl, setInputUrl] = useState('')
   const [label, setLabel] = useState('')
@@ -612,13 +631,70 @@ function CardAdminPanel({ uuid, onClose, onSaved }: { uuid: string; onClose: () 
       const r = await fetch('/api/redirect', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'update', uuid, url: inputUrl, label }),
+        body: JSON.stringify({ action: 'update', uuid, url: inputUrl, label, password }),
       })
       const d = await r.json()
       if (d.error) { setMsg('× ' + d.error) }
       else { setRedirectUrl(inputUrl); setSaved(true); setMsg('✓ 保存しました'); onSaved?.(inputUrl); setTimeout(() => { setSaved(false); setMsg('') }, 2500) }
     } catch { setMsg('× 通信エラー') }
     setLoading(false)
+  }
+
+  // パスワード認証画面
+  if (!authed) {
+    return (
+      <div style={{
+        position: 'fixed', inset: 0, zIndex: 100,
+        background: 'rgba(0,10,30,0.7)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: '20px',
+      }} onClick={e => e.target === e.currentTarget && onClose()}>
+        <div style={{
+          background: '#fff', borderRadius: '18px', padding: '28px',
+          width: '100%', maxWidth: '340px',
+          boxShadow: '0 24px 64px rgba(0,0,0,0.3)',
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+            <h2 style={{ fontSize: '15px', fontWeight: '700', color: K.navy, margin: 0 }}>🔒 管理者ログイン</h2>
+            <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: '22px', cursor: 'pointer', color: '#bbb', lineHeight: 1 }}>×</button>
+          </div>
+          {msg && (
+            <div style={{ padding: '9px 12px', borderRadius: '8px', marginBottom: '14px', fontSize: '13px', background: '#fff0f0', color: '#cc2222' }}>{msg}</div>
+          )}
+          <input
+            type="password"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            onKeyDown={e => {
+              if (e.key === 'Enter') {
+                if (password) setAuthed(true)
+                else setMsg('× パスワードを入力してください')
+              }
+            }}
+            placeholder="パスワード"
+            autoFocus
+            style={{
+              width: '100%', padding: '11px 13px', borderRadius: '9px',
+              border: '1.5px solid #d0d8e8', fontSize: '14px',
+              boxSizing: 'border-box', outline: 'none', marginBottom: '12px',
+            }}
+          />
+          <button
+            onClick={() => {
+              if (password) setAuthed(true)
+              else setMsg('× パスワードを入力してください')
+            }}
+            style={{
+              width: '100%', padding: '12px', background: K.navy, color: '#fff',
+              border: 'none', borderRadius: '9px', fontSize: '14px',
+              fontWeight: '700', cursor: 'pointer',
+            }}
+          >
+            ログイン
+          </button>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -824,7 +900,7 @@ export default function OmikujiApp() {
     setShaking(false)
     setTilting(false)
     setFortune(FORTUNES[Math.floor(Math.random() * FORTUNES.length)])
-    setStickNumber(Math.floor(Math.random() * 50) + 1)
+    setStickNumber(Math.floor(Math.random() * 20) + 1)
     setLuckyItem(getLucky())
     setPhase('shaking')
   }, [])
@@ -887,13 +963,19 @@ export default function OmikujiApp() {
                   pointerEvents: 'none',
                 }} />
 
-                {/* Three.js シーン */}
-                <OmikujiScene3D
-                  shaking={shaking}
-                  tilting={tilting}
-                  stickNumber={stickNumber}
-                  onTiltDone={handleTiltDone}
-                />
+                {/* Three.js シーン（WebGL非対応時はSVGフォールバック） */}
+                <WebGLErrorBoundary fallback={
+                  <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <OmikujiBox shaking={shaking} tilting={tilting} stickNumber={stickNumber} />
+                  </div>
+                }>
+                  <OmikujiScene3D
+                    shaking={shaking}
+                    tilting={tilting}
+                    stickNumber={stickNumber}
+                    onTiltDone={handleTiltDone}
+                  />
+                </WebGLErrorBoundary>
 
                 {/* オーバーレイテキスト */}
                 <div style={{
