@@ -810,6 +810,7 @@ export default function OmikujiApp() {
   const [showAdmin, setShowAdmin] = useState(false)
   const [countdown, setCountdown] = useState<number | null>(null)
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const countdownDelayRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [tilting, setTilting] = useState(false)
   const [history, setHistory] = useState<FortuneRecord[]>([])
 
@@ -853,26 +854,33 @@ export default function OmikujiApp() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase])
 
-  // 結果表示後3秒でリダイレクト（管理画面が開いている間は停止）
+  // 結果表示後3秒待ってからカウントダウン開始→リダイレクト（管理画面が開いている間は停止）
   useEffect(() => {
     if (phase !== 'result') return
     if (showAdmin) {
       // 管理中はカウント停止
+      if (countdownDelayRef.current) clearTimeout(countdownDelayRef.current)
       if (countdownRef.current) clearInterval(countdownRef.current)
       setCountdown(null)
       return
     }
-    let c = 3
-    setCountdown(c)
-    countdownRef.current = setInterval(() => {
-      c--
+    // 結果描画完了後3秒待ってからカウントダウン開始
+    countdownDelayRef.current = setTimeout(() => {
+      let c = 3
       setCountdown(c)
-      if (c <= 0) {
-        if (countdownRef.current) clearInterval(countdownRef.current)
-        window.location.href = redirectUrl
-      }
-    }, 1000)
-    return () => { if (countdownRef.current) clearInterval(countdownRef.current) }
+      countdownRef.current = setInterval(() => {
+        c--
+        setCountdown(c)
+        if (c <= 0) {
+          if (countdownRef.current) clearInterval(countdownRef.current)
+          window.location.href = redirectUrl
+        }
+      }, 1000)
+    }, 3000)
+    return () => {
+      if (countdownDelayRef.current) clearTimeout(countdownDelayRef.current)
+      if (countdownRef.current) clearInterval(countdownRef.current)
+    }
   }, [phase, redirectUrl, showAdmin])
 
   useEffect(() => {
