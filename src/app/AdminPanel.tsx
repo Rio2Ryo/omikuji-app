@@ -127,7 +127,7 @@ export default function AdminPanel({ onClose }: AdminPanelProps) {
 
   const handleCreate = async () => {
     if (!newUrl) { showMsg('× URLを入力してください'); return }
-    const d = await post({ action: 'create', label: newLabel || undefined, url: newUrl, group: newGroup || undefined, theme: newTheme || undefined })
+    const d = await post({ action: 'create', url: newUrl, group: newGroup || undefined, theme: newTheme || undefined })
     if (d) {
       showMsg(`✓ カード「${d.label}」を発行しました`)
       setNewLabel(''); setNewUrl(''); setNewGroup(''); setNewTheme('')
@@ -323,8 +323,8 @@ export default function AdminPanel({ onClose }: AdminPanelProps) {
         {/* ヘッダー */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
           <div>
-            <h2 style={{ fontSize: '16px', fontWeight: '700', color: K.navy, margin: 0 }}>NFC カード管理</h2>
-            <p style={{ fontSize: '11px', color: '#999', marginTop: '3px' }}>カードごとにリダイレクトURLを設定・確認</p>
+            <h2 style={{ fontSize: '16px', fontWeight: '700', color: K.navy, margin: 0 }}>KATAOMOI名刺</h2>
+            <p style={{ fontSize: '11px', color: '#999', marginTop: '3px' }}>名刺ごとにリダイレクトURLを設定・確認</p>
           </div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: '22px', cursor: 'pointer', color: '#bbb', lineHeight: 1, padding: '4px' }}>×</button>
         </div>
@@ -347,8 +347,6 @@ export default function AdminPanel({ onClose }: AdminPanelProps) {
             {/* 新規カード発行（1枚） */}
             <section style={{ marginBottom: '16px', padding: '16px', background: '#f0f6ff', borderRadius: '12px', border: '1px solid #ccd8f0' }}>
               <h3 style={{ fontSize: '13px', fontWeight: '700', color: K.navy, marginBottom: '12px' }}>+ 新規カード発行（1枚）</h3>
-              <input value={newLabel} onChange={e => setNewLabel(e.target.value)}
-                placeholder="ラベル（例：春キャンペーンA）" style={{ ...inp, marginBottom: '8px' }} />
               <input value={newGroup} onChange={e => setNewGroup(e.target.value)}
                 placeholder="グループ名（省略可、例：イベントA）" style={{ ...inp, marginBottom: '8px' }} />
               <select value={newTheme} onChange={e => setNewTheme(e.target.value)}
