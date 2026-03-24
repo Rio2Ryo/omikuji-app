@@ -109,7 +109,7 @@ function getLucky(): string {
   return LUCKY_ITEMS[Math.floor(Math.random() * LUCKY_ITEMS.length)]
 }
 
-type Phase = 'idle' | 'shaking' | 'stick' | 'result'
+type Phase = 'shaking' | 'stick' | 'result'
 
 // ── 履歴 ────────────────────────────────────────────
 interface FortuneRecord {
@@ -799,12 +799,12 @@ function CardAdminPanel({ uuid, onClose, onSaved }: { uuid: string; onClose: () 
 }
 
 export default function OmikujiApp() {
-  const [phase, setPhase] = useState<Phase>('idle')
+  const [phase, setPhase] = useState<Phase>('shaking')
   const [fortune, setFortune] = useState(() => FORTUNES[Math.floor(Math.random() * FORTUNES.length)])
   const [stickNumber, setStickNumber] = useState(() => Math.floor(Math.random() * 20) + 1)
   const [luckyItem, setLuckyItem] = useState<string>(getLucky)
   const [showEffects, setShowEffects] = useState(false)
-  const [shaking, setShaking] = useState(false)
+  const [shaking, setShaking] = useState(true)
   const [redirectUrl, setRedirectUrl] = useState('https://kataomoi.org')
   const [cardUuid, setCardUuid] = useState<string | null>(null)
   const [showAdmin, setShowAdmin] = useState(false)
@@ -931,20 +931,6 @@ export default function OmikujiApp() {
     setPhase('shaking')
   }, [])
 
-  // idle画面の「おみくじを引く」ボタン — ジェスチャーコンテキスト内でplay()を同期実行
-  const handleDraw = useCallback(() => {
-    const newVideo = `/videos/0${Math.floor(Math.random() * 4) + 1}.mp4`
-    setSelectedVideo(newVideo)
-    if (videoRef.current) {
-      videoRef.current.src = newVideo
-      videoRef.current.load()
-      videoRef.current.play().catch(err => console.warn('[omikuji] video play failed:', err))
-    }
-    setShaking(true)
-    setTilting(false)
-    setPhase('shaking')
-  }, [])
-
   const isResult = phase === 'result'
 
   return (
@@ -982,42 +968,17 @@ export default function OmikujiApp() {
           alignItems: 'center', justifyContent: 'center', padding: '16px 20px',
         }}>
 
-          {/* idle — おみくじを引くボタン */}
-          {phase === 'idle' && (
-            <div style={{ textAlign: 'center', animation: 'fadeInUp 0.5s ease forwards' }}>
-              <OmikujiBox shaking={false} tilting={false} stickNumber={stickNumber} />
-              <button
-                onClick={handleDraw}
-                style={{
-                  marginTop: '28px',
-                  padding: '16px 48px',
-                  fontSize: '16px', fontWeight: '700',
-                  letterSpacing: '0.25em',
-                  background: `linear-gradient(135deg, ${K.navy}, #1a3a70)`,
-                  color: K.white, border: 'none', borderRadius: '14px',
-                  cursor: 'pointer', boxShadow: `0 4px 20px ${K.navy}60`,
-                  fontFamily: "'Hiragino Sans', sans-serif",
-                }}
-              >
-                おみくじを引く
-              </button>
-            </div>
-          )}
-
           {/* シャカシャカ & 棒が出るシーン — display:noneでDOMに常駐させiOSのautoplay制限を回避 */}
           <div style={{
-            display: (phase === 'shaking' || phase === 'stick') ? 'flex' : 'none',
-            justifyContent: 'center',
+            display: (phase === 'shaking' || phase === 'stick') ? 'block' : 'none',
             textAlign: 'center',
             animation: 'fadeInUp 0.5s ease forwards',
             width: '100%',
           }}>
-            {/* 3D シーンコンテナ — 縦型（9:16）*/}
+            {/* 3D シーンコンテナ */}
             <div style={{
-              aspectRatio: '9/16',
-              height: 'min(85vh, 620px)',
-              width: 'auto',
-              maxWidth: 'min(100%, calc(min(85vh, 620px) * 9 / 16))',
+              width: 'min(360px, 94vw)',
+              height: 'min(480px, 62vw, 68vh)',
               margin: '0 auto',
               position: 'relative',
               borderRadius: '24px',
