@@ -7,7 +7,7 @@ export const ivisionTheme: Theme = {
   fortunes: [
     {
       id: 'kichi', result: '吉', reading: 'きち',
-      message: '渋谷の風があなたの背中を押す。良いことが続く一日です。',
+      message: '小さな幸せが積み重なる日。笑顔を忘れずに。',
       resultColor: '#4CAF50',
       bg: 'linear-gradient(150deg, #001a00 0%, #002800 40%, #004000 100%)',
       cardBg: 'rgba(0,25,0,0.92)', cardBorder: '#4CAF50',
@@ -16,7 +16,7 @@ export const ivisionTheme: Theme = {
     },
     {
       id: 'daikichi', result: '大吉', reading: 'だいきち',
-      message: '渋谷から、最高の運気があなたへ届きます。',
+      message: '素晴らしい運気！今日のあなたは何をやってもうまくいく。',
       resultColor: '#FFD700',
       bg: 'linear-gradient(150deg, #1a1000 0%, #2a1800 40%, #403000 100%)',
       cardBg: 'rgba(30,20,0,0.92)', cardBorder: '#FFD700',
@@ -25,7 +25,7 @@ export const ivisionTheme: Theme = {
     },
     {
       id: 'daidaikichi', result: '大大吉', reading: 'だいだいきち',
-      message: '街の熱気のように、あなたの運勢は頂点へと向かっています。',
+      message: '最高の一日の予感！周りの人にも幸運をおすそわけしよう。',
       resultColor: '#FF6B6B',
       bg: 'linear-gradient(150deg, #200010 0%, #350018 40%, #400020 100%)',
       cardBg: 'rgba(35,0,15,0.92)', cardBorder: '#FF6B6B',
@@ -34,7 +34,7 @@ export const ivisionTheme: Theme = {
     },
     {
       id: 'daidaidaikichi', result: '大大大吉', reading: 'だいだいだいきち',
-      message: '渋谷の交差点が輝くように、あなたの未来が眩しく光り輝く。',
+      message: '特別な運命があなたを待っている。大きな一歩を踏み出そう！',
       resultColor: '#CE93D8',
       bg: 'linear-gradient(150deg, #100020 0%, #1a0030 40%, #200038 100%)',
       cardBg: 'rgba(18,0,35,0.92)', cardBorder: '#9C27B0',
@@ -43,7 +43,7 @@ export const ivisionTheme: Theme = {
     },
     {
       id: 'daidaidaidaikichi', result: '大大大大吉', reading: 'だいだいだいだいきち',
-      message: '渋谷全体があなたを祝福している。伝説級の幸運が舞い降りた。',
+      message: '奇跡レベルの大吉！一生に一度の超ラッキーDay！✨',
       resultColor: '#FFD700',
       bg: 'linear-gradient(135deg, #1a0000 0%, #001a00 25%, #000020 50%, #1a0015 75%, #1a1000 100%)',
       cardBg: 'rgba(15,10,20,0.92)', cardBorder: '#FFD700',
