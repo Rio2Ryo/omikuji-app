@@ -813,6 +813,7 @@ export default function OmikujiApp() {
   const countdownDelayRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [tilting, setTilting] = useState(false)
   const [history, setHistory] = useState<FortuneRecord[]>([])
+  const [selectedVideo, setSelectedVideo] = useState<string>(() => `/videos/0${Math.floor(Math.random() * 4) + 1}.mp4`)
 
   const isDaikichi = fortune.id === 'daikichi'
   const isKyo = fortune.id === 'kyo'
@@ -923,6 +924,7 @@ export default function OmikujiApp() {
     setFortune(FORTUNES[Math.floor(Math.random() * FORTUNES.length)])
     setStickNumber(Math.floor(Math.random() * 20) + 1)
     setLuckyItem(getLucky())
+    setSelectedVideo(`/videos/0${Math.floor(Math.random() * 4) + 1}.mp4`)
     setPhase('shaking')
   }, [])
 
@@ -984,19 +986,19 @@ export default function OmikujiApp() {
                   pointerEvents: 'none',
                 }} />
 
-                {/* Three.js シーン（WebGL非対応時はSVGフォールバック） */}
-                <WebGLErrorBoundary fallback={
-                  <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <OmikujiBox shaking={shaking} tilting={tilting} stickNumber={stickNumber} />
-                  </div>
-                }>
-                  <OmikujiScene3D
-                    shaking={shaking}
-                    tilting={tilting}
-                    stickNumber={stickNumber}
-                    onTiltDone={handleTiltDone}
-                  />
-                </WebGLErrorBoundary>
+                {/* 動画アニメーション */}
+                <video
+                  key={selectedVideo}
+                  src={selectedVideo}
+                  autoPlay
+                  muted
+                  playsInline
+                  style={{
+                    position: 'absolute', inset: 0,
+                    width: '100%', height: '100%',
+                    objectFit: 'cover',
+                  }}
+                />
 
                 {/* オーバーレイテキスト */}
                 <div style={{
