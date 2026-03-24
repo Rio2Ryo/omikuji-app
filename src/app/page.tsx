@@ -6,6 +6,7 @@ import dynamic from 'next/dynamic'
 
 // Three.jsはSSRなしで動的ロード
 const OmikujiScene3D = dynamic(() => import('./OmikujiScene3D'), { ssr: false })
+import AdminPanel from './AdminPanel'
 
 // WebGL失敗時のエラーバウンダリ
 class WebGLErrorBoundary extends Component<
@@ -1262,7 +1263,7 @@ export default function OmikujiApp() {
       </div>
 
       {/* カード管理画面（uuid付きアクセス時のみ表示） */}
-      {showAdmin && <CardAdminPanel uuid={cardUuid || ""} onClose={() => setShowAdmin(false)} onSaved={(url) => { setRedirectUrl(url); setShowAdmin(false) }} />}
+      {showAdmin && <AdminPanel onClose={() => setShowAdmin(false)} />}
     </>
   )
 }
