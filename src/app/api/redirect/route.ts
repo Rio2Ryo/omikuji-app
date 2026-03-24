@@ -222,6 +222,37 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok, deleted })
   }
 
+  // 一括テーマ変更: { action: 'bulkThemeUpdate', uuids: string[], theme: string }
+  if (body.action === 'bulkThemeUpdate') {
+    const uuids: string[] = body.uuids || []
+    let updated = 0
+    for (const uuid of uuids) {
+      if (config.cards[uuid]) {
+        config.cards[uuid].theme = body.theme || undefined
+        updated++
+      }
+    }
+    config.updatedAt = new Date().toISOString()
+    const ok = await saveConfig(config)
+    return NextResponse.json({ ok, updated })
+  }
+
+  // グループ削除: { action: 'deleteGroup', group: string }
+  if (body.action === 'deleteGroup') {
+    if (config.groupThemes) {
+      delete config.groupThemes[body.group]
+    }
+    // カードのgroupフィールドも解除
+    for (const card of Object.values(config.cards)) {
+      if (card.group === body.group) {
+        card.group = undefined
+      }
+    }
+    config.updatedAt = new Date().toISOString()
+    const ok = await saveConfig(config)
+    return NextResponse.json({ ok })
+  }
+
   // グループテーマ設定: { action: 'setGroupTheme', group: string, theme: string }
   if (body.action === 'setGroupTheme') {
     if (!body.group) return NextResponse.json({ error: 'group is required' }, { status: 400 })

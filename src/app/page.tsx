@@ -990,6 +990,23 @@ export default function OmikujiApp() {
               />
             </div>
 
+            {/* 動画下ボタン群 */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', marginTop: '8px' }}>
+              {cardUuid && (
+                <button
+                  onClick={() => setShowUserEdit(true)}
+                  onMouseEnter={e => { e.currentTarget.style.opacity = '0.65' }}
+                  onMouseLeave={e => { e.currentTarget.style.opacity = '0.2' }}
+                  style={{ padding: '4px 12px', fontSize: '10px', background: 'transparent', color: 'rgba(100,220,150,0.9)', border: '1px solid rgba(100,220,150,0.2)', borderRadius: '6px', cursor: 'pointer', letterSpacing: '0.08em', opacity: '0.2', transition: 'opacity 0.2s' }}
+                >✎ リダイレクト先を編集</button>
+              )}
+              <button
+                onClick={() => setShowAdmin(true)}
+                onMouseEnter={e => { e.currentTarget.style.opacity = '0.65' }}
+                onMouseLeave={e => { e.currentTarget.style.opacity = '0.2' }}
+                style={{ padding: '4px 12px', fontSize: '10px', background: 'transparent', color: 'rgba(150,170,210,0.9)', border: '1px solid rgba(100,130,180,0.2)', borderRadius: '6px', cursor: 'pointer', letterSpacing: '0.1em', opacity: '0.2', transition: 'opacity 0.2s' }}
+              >⚙ 管理</button>
+            </div>
           </div>
 
           {/* 結果 */}
@@ -1180,45 +1197,26 @@ export default function OmikujiApp() {
                 </p>
               )}
 
+              {/* 結果画面下ボタン群 */}
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', marginTop: '4px' }}>
+                {cardUuid && (
+                  <button
+                    onClick={() => setShowUserEdit(true)}
+                    onMouseEnter={e => { e.currentTarget.style.opacity = '0.65' }}
+                    onMouseLeave={e => { e.currentTarget.style.opacity = '0.2' }}
+                    style={{ padding: '4px 12px', fontSize: '10px', background: 'transparent', color: 'rgba(100,220,150,0.9)', border: '1px solid rgba(100,220,150,0.2)', borderRadius: '6px', cursor: 'pointer', letterSpacing: '0.08em', opacity: '0.2', transition: 'opacity 0.2s' }}
+                  >✎ リダイレクト先を編集</button>
+                )}
+                <button
+                  onClick={() => setShowAdmin(true)}
+                  onMouseEnter={e => { e.currentTarget.style.opacity = '0.65' }}
+                  onMouseLeave={e => { e.currentTarget.style.opacity = '0.2' }}
+                  style={{ padding: '4px 12px', fontSize: '10px', background: 'transparent', color: 'rgba(150,170,210,0.9)', border: '1px solid rgba(100,130,180,0.2)', borderRadius: '6px', cursor: 'pointer', letterSpacing: '0.1em', opacity: '0.2', transition: 'opacity 0.2s' }}
+                >⚙ 管理</button>
+              </div>
             </div>
           )}
         </main>
-
-        {/* 固定ボタン群 (全フェーズで常時表示) */}
-        <div style={{
-          position: 'fixed', bottom: '20px', left: '16px',
-          display: 'flex', flexDirection: 'column', gap: '6px',
-          zIndex: 40,
-        }}>
-          {cardUuid && (
-            <button
-              onClick={() => setShowUserEdit(true)}
-              onMouseEnter={e => { e.currentTarget.style.opacity = '0.65' }}
-              onMouseLeave={e => { e.currentTarget.style.opacity = '0.2' }}
-              style={{
-                padding: '5px 10px', fontSize: '10px',
-                background: 'rgba(0,20,10,0.4)', backdropFilter: 'blur(4px)',
-                color: 'rgba(100,220,150,0.9)',
-                border: '1px solid rgba(100,220,150,0.2)',
-                borderRadius: '6px', cursor: 'pointer', letterSpacing: '0.08em',
-                opacity: '0.2', transition: 'opacity 0.2s',
-              }}
-            >✎ リダイレクト先を編集</button>
-          )}
-          <button
-            onClick={() => setShowAdmin(true)}
-            onMouseEnter={e => { e.currentTarget.style.opacity = '0.65' }}
-            onMouseLeave={e => { e.currentTarget.style.opacity = '0.2' }}
-            style={{
-              padding: '5px 10px', fontSize: '10px',
-              background: 'rgba(0,10,30,0.4)', backdropFilter: 'blur(4px)',
-              color: 'rgba(150,170,210,0.9)',
-              border: '1px solid rgba(100,130,180,0.2)',
-              borderRadius: '6px', cursor: 'pointer', letterSpacing: '0.1em',
-              opacity: '0.2', transition: 'opacity 0.2s',
-            }}
-          >⚙ 管理</button>
-        </div>
 
         {/* 右下：名刺購入ボタン */}
         <a
