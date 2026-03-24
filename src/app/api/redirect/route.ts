@@ -11,6 +11,7 @@ export interface CardConfig {
   label: string       // 管理用ラベル（例：「春キャンペーンA」）
   url: string
   createdAt: string
+  group?: string      // グループ名（例：「イベントA」「店舗B」）
 }
 
 export interface RedirectConfig {
@@ -121,7 +122,7 @@ export async function POST(request: Request) {
 
   const config = await fetchConfig()
 
-  // 新規カード発行: { action: 'create', label, url }
+  // 新規カード発行: { action: 'create', label, url, group? }
   if (body.action === 'create') {
     try { new URL(body.url) } catch { return NextResponse.json({ error: 'Invalid URL' }, { status: 400 }) }
     const uuid = generateUUID()
@@ -130,10 +131,35 @@ export async function POST(request: Request) {
       label: body.label || `カード ${Object.keys(config.cards).length + 1}`,
       url: body.url,
       createdAt: new Date().toISOString(),
+      ...(body.group ? { group: body.group } : {}),
     }
     config.updatedAt = new Date().toISOString()
     const ok = await saveConfig(config)
     return NextResponse.json({ ok, ...config.cards[uuid], uuid })
+  }
+
+  // 一括カード発行: { action: 'bulkCreate', count, url, group? }
+  if (body.action === 'bulkCreate') {
+    const count = Math.max(1, Math.min(100, Number(body.count) || 1))
+    try { new URL(body.url) } catch { return NextResponse.json({ error: 'Invalid URL' }, { status: 400 }) }
+    const now = new Date().toISOString()
+    const created: CardConfig[] = []
+    const base = Object.keys(config.cards).length
+    for (let i = 0; i < count; i++) {
+      const uuid = generateUUID()
+      const card: CardConfig = {
+        uuid,
+        label: body.group ? `${body.group} #${base + i + 1}` : `カード ${base + i + 1}`,
+        url: body.url,
+        createdAt: now,
+        ...(body.group ? { group: body.group } : {}),
+      }
+      config.cards[uuid] = card
+      created.push(card)
+    }
+    config.updatedAt = now
+    const ok = await saveConfig(config)
+    return NextResponse.json({ ok, count: created.length, cards: created })
   }
 
   // カード更新: { action: 'update', uuid, label?, url? }
@@ -146,6 +172,7 @@ export async function POST(request: Request) {
       config.cards[body.uuid].url = body.url
     }
     if (body.label !== undefined) config.cards[body.uuid].label = body.label
+    if (body.group !== undefined) config.cards[body.uuid].group = body.group || undefined
     config.updatedAt = new Date().toISOString()
     const ok = await saveConfig(config)
     return NextResponse.json({ ok, ...config.cards[body.uuid] })
