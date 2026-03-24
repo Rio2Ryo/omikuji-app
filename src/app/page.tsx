@@ -990,18 +990,6 @@ export default function OmikujiApp() {
               />
             </div>
 
-            {/* リダイレクト先編集ボタン（UUID付きアクセス時のみ） */}
-            {cardUuid && (
-              <button
-                onClick={() => setShowUserEdit(true)}
-                style={{ marginTop: '10px', padding: '6px 16px', fontSize: '11px', background: 'transparent', color: 'rgba(100,180,130,0.6)', border: '1px solid rgba(100,180,130,0.25)', borderRadius: '6px', cursor: 'pointer', letterSpacing: '0.08em' }}
-              >✎ リダイレクト先を編集</button>
-            )}
-            {/* 管理ボタン */}
-            <button
-              onClick={() => setShowAdmin(true)}
-              style={{ marginTop: '6px', padding: '6px 16px', fontSize: '11px', background: 'transparent', color: 'rgba(100,130,180,0.5)', border: '1px solid rgba(100,130,180,0.2)', borderRadius: '6px', cursor: 'pointer', letterSpacing: '0.1em' }}
-            >⚙ 管理</button>
           </div>
 
           {/* 結果 */}
@@ -1192,21 +1180,39 @@ export default function OmikujiApp() {
                 </p>
               )}
 
-              {/* リダイレクト先編集ボタン（UUID付きアクセス時のみ） */}
-              {cardUuid && (
-                <button
-                  onClick={() => setShowUserEdit(true)}
-                  style={{ display: 'block', width: '100%', marginTop: '6px', padding: '7px', fontSize: '11px', background: 'transparent', color: 'rgba(100,180,130,0.55)', border: '1px solid rgba(100,180,130,0.2)', borderRadius: '6px', cursor: 'pointer', letterSpacing: '0.08em', position: 'relative', zIndex: 2 }}
-                >✎ リダイレクト先を編集</button>
-              )}
-              {/* 管理ボタン */}
-              <button
-                onClick={() => setShowAdmin(true)}
-                style={{ display: 'block', width: '100%', marginTop: '4px', padding: '8px', fontSize: '11px', background: 'transparent', color: 'rgba(100,130,180,0.35)', border: '1px solid transparent', borderRadius: '6px', cursor: 'pointer', letterSpacing: '0.1em', position: 'relative', zIndex: 2 }}
-              >⚙ 管理</button>
             </div>
           )}
         </main>
+
+        {/* 固定ボタン群 (全フェーズで常時表示) */}
+        <div style={{
+          position: 'fixed', bottom: '20px', left: '16px',
+          display: 'flex', flexDirection: 'column', gap: '6px',
+          zIndex: 40,
+        }}>
+          {cardUuid && (
+            <button
+              onClick={() => setShowUserEdit(true)}
+              style={{
+                padding: '7px 14px', fontSize: '11px',
+                background: 'rgba(0,20,10,0.75)', backdropFilter: 'blur(8px)',
+                color: 'rgba(100,220,150,0.85)',
+                border: '1px solid rgba(100,220,150,0.3)',
+                borderRadius: '8px', cursor: 'pointer', letterSpacing: '0.08em',
+              }}
+            >✎ リダイレクト先を編集</button>
+          )}
+          <button
+            onClick={() => setShowAdmin(true)}
+            style={{
+              padding: '7px 14px', fontSize: '11px',
+              background: 'rgba(0,10,30,0.75)', backdropFilter: 'blur(8px)',
+              color: 'rgba(100,130,180,0.7)',
+              border: '1px solid rgba(100,130,180,0.25)',
+              borderRadius: '8px', cursor: 'pointer', letterSpacing: '0.1em',
+            }}
+          >⚙ 管理</button>
+        </div>
 
         {/* 右下：名刺購入ボタン */}
         <a

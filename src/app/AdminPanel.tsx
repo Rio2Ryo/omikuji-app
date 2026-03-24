@@ -21,6 +21,7 @@ interface CardConfig {
 interface Config {
   cards: Record<string, CardConfig>
   updatedAt: string
+  groupThemes?: Record<string, string>
 }
 
 interface AdminPanelProps {
@@ -319,6 +320,35 @@ export default function AdminPanel({ onClose }: AdminPanelProps) {
                 {bulkCreateCount}枚まとめて発行
               </button>
             </section>
+
+            {/* グループテーマ設定 */}
+            {groups.length > 0 && (
+              <section style={{ marginBottom: '16px', padding: '16px', background: '#fdf4ff', borderRadius: '12px', border: '1px solid #ddc8f0' }}>
+                <h3 style={{ fontSize: '13px', fontWeight: '700', color: K.navy, marginBottom: '12px' }}>🎨 グループテーマ設定</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {groups.map(group => {
+                    const currentTheme = config.groupThemes?.[group] || ''
+                    return (
+                      <div key={group} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <span style={{ fontSize: '13px', color: K.navy, flex: 1, fontWeight: '600' }}>{group}</span>
+                        <select
+                          value={currentTheme}
+                          onChange={async e => {
+                            const theme = e.target.value
+                            const d = await post({ action: 'setGroupTheme', group, theme })
+                            if (d) { showMsg(`✓ ${group} のテーマを設定しました`); loadConfig() }
+                          }}
+                          style={{ padding: '6px 10px', borderRadius: '7px', border: '1px solid #d0d8e8', fontSize: '12px', color: '#444', background: '#fff', outline: 'none', cursor: 'pointer' }}
+                        >
+                          <option value="">default（掛け軸）</option>
+                          <option value="ivision">渋谷愛ビジョン</option>
+                        </select>
+                      </div>
+                    )
+                  })}
+                </div>
+              </section>
+            )}
 
             {/* 一括URL変更 */}
             {allCards.length > 1 && (

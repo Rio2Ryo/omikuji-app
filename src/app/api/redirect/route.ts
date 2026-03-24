@@ -18,11 +18,13 @@ export interface CardConfig {
 export interface RedirectConfig {
   cards: Record<string, CardConfig>  // uuid -> CardConfig
   updatedAt: string
+  groupThemes?: Record<string, string>
 }
 
 const DEFAULT_CONFIG: RedirectConfig = {
   cards: {},
   updatedAt: new Date().toISOString(),
+  groupThemes: {},
 }
 
 // インメモリキャッシュ（頻繁なGist APIコール回避）
@@ -100,7 +102,9 @@ export async function GET(request: Request) {
     if (!card) {
       return NextResponse.json({ error: 'Card not found', uuid }, { status: 404 })
     }
-    return NextResponse.json({ url: card.url, uuid, label: card.label, theme: card.theme || 'default' })
+    const groupTheme = card.group && config.groupThemes?.[card.group]
+    const theme = card.theme || groupTheme || 'default'
+    return NextResponse.json({ url: card.url, uuid, label: card.label, theme })
   }
   return NextResponse.json(config)
 }
@@ -201,6 +205,20 @@ export async function POST(request: Request) {
     config.updatedAt = new Date().toISOString()
     const ok = await saveConfig(config)
     return NextResponse.json({ ok, ...config })
+  }
+
+  // グループテーマ設定: { action: 'setGroupTheme', group: string, theme: string }
+  if (body.action === 'setGroupTheme') {
+    if (!body.group) return NextResponse.json({ error: 'group is required' }, { status: 400 })
+    if (!config.groupThemes) config.groupThemes = {}
+    if (body.theme) {
+      config.groupThemes[body.group] = body.theme
+    } else {
+      delete config.groupThemes[body.group]
+    }
+    config.updatedAt = new Date().toISOString()
+    const ok = await saveConfig(config)
+    return NextResponse.json({ ok, groupThemes: config.groupThemes })
   }
 
   return NextResponse.json({ error: 'Unknown action' }, { status: 400 })
