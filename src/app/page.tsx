@@ -875,11 +875,11 @@ export default function OmikujiApp() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase])
 
-  // 結果表示後3秒待ってからカウントダウン開始→リダイレクト（管理画面が開いている間は停止）
+  // 結果表示後3秒待ってからカウントダウン開始→リダイレクト（管理・編集画面が開いている間は停止）
   useEffect(() => {
     if (phase !== 'result') return
-    if (showAdmin) {
-      // 管理中はカウント停止
+    if (showAdmin || showUserEdit) {
+      // 管理/編集中はカウント停止
       if (countdownDelayRef.current) clearTimeout(countdownDelayRef.current)
       if (countdownRef.current) clearInterval(countdownRef.current)
       setCountdown(null)
@@ -902,7 +902,7 @@ export default function OmikujiApp() {
       if (countdownDelayRef.current) clearTimeout(countdownDelayRef.current)
       if (countdownRef.current) clearInterval(countdownRef.current)
     }
-  }, [phase, redirectUrl, showAdmin])
+  }, [phase, redirectUrl, showAdmin, showUserEdit])
 
   useEffect(() => {
     if (phase === 'shaking') {
