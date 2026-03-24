@@ -284,6 +284,22 @@ const CSS_ANIM = `
     from { opacity: 0; transform: translateX(-8px); }
     to   { opacity: 1; transform: translateX(0); }
   }
+  /* 動画シーン — PC時センタリング */
+  .video-scene-container {
+    width: 100%;
+    height: 100dvh;
+  }
+  @media (min-width: 768px) {
+    .video-scene-outer {
+      background: #000;
+      display: flex !important;
+      justify-content: center;
+    }
+    .video-scene-container {
+      width: 480px;
+      flex-shrink: 0;
+    }
+  }
 `
 
 // ── おみくじ筒 SVG（Lottie風・高品質アニメ版）─────────────────
@@ -970,23 +986,26 @@ export default function OmikujiApp() {
         }}>
 
           {/* シャカシャカ & 棒が出るシーン — display:noneでDOMに常駐させiOSのautoplay制限を回避 */}
-          <div style={{
-            display: (phase === 'shaking' || phase === 'stick') ? 'block' : 'none',
-            textAlign: 'center',
-            animation: 'fadeInUp 0.5s ease forwards',
-            width: '100%',
-          }}>
-            {/* 3D シーンコンテナ */}
-            <div style={{
+          <div
+            className="video-scene-outer"
+            style={{
+              display: (phase === 'shaking' || phase === 'stick') ? 'block' : 'none',
+              textAlign: 'center',
+              animation: 'fadeInUp 0.5s ease forwards',
               width: '100%',
-              height: '100dvh',
-              margin: '0 auto',
-              position: 'relative',
-              borderRadius: '24px',
-              overflow: 'hidden',
-              background: 'linear-gradient(160deg, #0a1428 0%, #0f1f3d 40%, #1a3060 100%)',
-              boxShadow: '0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(132,172,252,0.12)',
-            }}>
+            }}
+          >
+            {/* 3D シーンコンテナ */}
+            <div
+              className="video-scene-container"
+              style={{
+                position: 'relative',
+                borderRadius: '24px',
+                overflow: 'hidden',
+                background: 'linear-gradient(160deg, #0a1428 0%, #0f1f3d 40%, #1a3060 100%)',
+                boxShadow: '0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(132,172,252,0.12)',
+              }}
+            >
               {/* 背景：光の放射 */}
               <div style={{
                 position: 'absolute', inset: 0, zIndex: 0,
